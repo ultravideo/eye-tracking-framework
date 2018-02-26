@@ -67,17 +67,15 @@ for dir in os.listdir(root):
 							export_path = os.path.join(export_path_root, dir)
 							
 							# Create folder if it doesn't exist
-							if not os.path.isdir(export_path):
-								break
-								#os.makedirs(export_path)
-							#shutil.copyfile(copy_file_path, os.path.join(export_path, export_filename))
+							if not os.path.isdir(export_path):								
+								os.makedirs(export_path)
+							shutil.copyfile(copy_file_path, os.path.join(export_path, export_filename))
 							
 							# Copy by video
 							export_path = os.path.join(export_path_root, vid.split('_')[0])
 							if not os.path.isdir(export_path):
-								break
-								#os.makedirs(export_path)
-							#shutil.copyfile(copy_file_path, os.path.join(export_path, export_filename))
+								os.makedirs(export_path)
+							shutil.copyfile(copy_file_path, os.path.join(export_path, export_filename))
 							
 							# debug
 							#print(os.path.join(export_path, export_filename))
