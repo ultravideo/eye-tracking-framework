@@ -5,17 +5,18 @@ import os
 from csv import reader
 
 
-def get_starting_frame(location, threshold=15.):
+def get_starting_frame(location, recording="000", threshold=15.):
     """
     Returns zero based index of the frame that is the first frame that is not 
     completely black on the surface.
     location is the base directory of the recording, not including the '000'
+    recording is the number of the recording
     threshold is the value for the average of the pixel to determine wether the picture is black or not
     """
-    video_file_path = os.path.join(location, "000", "world.mp4")
+    video_file_path = os.path.join(location, recording, "world.mp4")
     video = cv2.VideoCapture(video_file_path)
 
-    csv_file_path = os.path.join(location, "000", "exports")
+    csv_file_path = os.path.join(location, recording, "exports")
     assert(len(os.listdir(csv_file_path)) == 1)  # Make sure there is exactly one export result
 
     csv_file_path = os.path.join(csv_file_path, os.listdir(csv_file_path)[0], "surfaces")
@@ -37,18 +38,18 @@ def get_starting_frame(location, threshold=15.):
 
     while video.grab():
         data = datareader.__next__()
-        k = data[2].split('\n')
-        k = [z for z in map(lambda x: x.strip("[").strip("]").strip().strip("["), k)]
-        trans_mat[0] = [z for z in map(lambda x: float(x), k[0].strip().split())]
-        trans_mat[1] = [z for z in map(lambda x: float(x), k[1].strip().split())]
-        trans_mat[2] = [z for z in map(lambda x: float(x), k[2].strip().split())]
+        matrix_string = data[2].split('\n')
+        matrix_string_array = [z for z in map(lambda x: x.strip("[").strip("]").strip().strip("["), matrix_string)]
+        trans_mat[0] = [z for z in map(lambda x: float(x), matrix_string_array[0].strip().split())]
+        trans_mat[1] = [z for z in map(lambda x: float(x), matrix_string_array[1].strip().split())]
+        trans_mat[2] = [z for z in map(lambda x: float(x), matrix_string_array[2].strip().split())]
 
-        k = np.float64(cv2.perspectiveTransform(np.array([corner_coordinates]), trans_mat)[0])
+        corners = np.float64(cv2.perspectiveTransform(np.array([corner_coordinates]), trans_mat)[0])
 
-        p = np.zeros(shape=k.shape, dtype=np.int32)
+        p = np.zeros(shape=corners.shape, dtype=np.int32)
         i = 0
-        for item in k:
-            p[i] = (item[0] * width, height - item[1] * height)
+        for corner in corners:
+            p[i] = (corner[0] * width, height - corner[1] * height)
             i += 1
         pts = p.reshape((-1,1,2))
 
