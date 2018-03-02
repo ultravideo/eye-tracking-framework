@@ -51,7 +51,8 @@ def main():
             with open(result_file_path, "w") as gaze_data:
                 gaze_data.write("frame_index,x_coord,y_coord\n")
                 for index, gaze in enumerate(data):
-                    gaze_data.write("{},{},{}\n".format(index, gaze[0], gaze[1]))
+                    if gaze:
+                        gaze_data.write("{},{},{}\n".format(index, gaze[0], gaze[1]))
 
             copy(result_file_path, os.path.join(result_dir, subject, "{}.csv".format(video)))
 
