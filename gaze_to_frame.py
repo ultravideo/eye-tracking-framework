@@ -16,6 +16,14 @@ def average_gaze(data):
     return x / len(data), y / len(data),
 
 
+def in_frame(point, topright):
+    if point[0] < 0 or point[1] < 0:
+        return False
+    if point[0] > topright[0] or point[1] > topright[1]:
+        return False
+    return True
+
+
 def gaze_to_frame(location, recording, framerate=60, correction_function=lambda x, y: (x, y)):
     """
     location is the path to the video about the recording not including the number "000"
@@ -38,6 +46,7 @@ def gaze_to_frame(location, recording, framerate=60, correction_function=lambda 
 
     assert (gaze_file_path[-4:] == ".csv")  # Make sure gaze file was actually found
 
+    resolution = [int(x) for x in os.path.basename(location).split("_")[1].split("x")]
     frametime = 1. / framerate
 
     # For validating the data the threshold in the csv file can't really be used since the capture software
@@ -68,7 +77,10 @@ def gaze_to_frame(location, recording, framerate=60, correction_function=lambda 
                     final_data.append(None)
                 else:
                     x, y = average_gaze(data_points)
-                    final_data.append(correction_function(x, y))
+                    if in_frame((x, y), resolution):
+                        final_data.append(correction_function(x, y))
+                    else:
+                        final_data.append(None)
                 data_points = []
                 initial_timestamp += frametime
 
