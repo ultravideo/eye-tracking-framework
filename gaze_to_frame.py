@@ -76,15 +76,18 @@ def gaze_to_frame(location, recording, framerate=60, correction_function=lambda 
                 if len(data_points) < threshold:
                     final_data.append(None)
                 else:
-                    x, y = average_gaze(data_points)
+                    x, y = correction_function(average_gaze(data_points))
+                    x = resolution[0]*x
+                    y = resolution[1]*y
+
                     if in_frame((x, y), resolution):
-                        final_data.append(correction_function(x, y))
+                        final_data.append((x, y,))
                     else:
                         final_data.append(None)
                 data_points = []
                 initial_timestamp += frametime
 
-            data_points.append((float(row[5]), float(row[6]),))
+            data_points.append((float(row[3]), float(row[4]),))
 
     return final_data
 
