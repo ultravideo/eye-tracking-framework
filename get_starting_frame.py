@@ -59,6 +59,7 @@ def get_starting_frame(location, recording="000", threshold=15.):
                                                  np.float32([[0, 0], [width, 0], [width, height], [0, height]]))
 
         warp = cv2.warpPerspective(image, trans_mat2, dsize=(width, height))
+
         if np.average(warp, axis=(0,1,2)) > threshold:
             return int(data[0])
 
