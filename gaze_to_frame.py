@@ -79,7 +79,7 @@ def gaze_to_frame(location, recording, framerate=60, correction_function=lambda 
                     temp = average_gaze(data_points)
                     x, y = correction_function(temp[0], temp[1])
                     x = resolution[0]*x
-                    y = resolution[1]*y
+                    y = resolution[1] - resolution[1]*y
 
                     if in_frame((x, y), resolution):
                         final_data.append((x, y,))
