@@ -33,7 +33,7 @@ def gaze_to_frame(location, recording, framerate=60, correction_function=lambda 
     the corrected x and y coordinate
     Returns an array containing the gaze for each frame, might be missing some (<10) frames at the end
     """
-    start_frame = get_starting_frame(location, recording)
+    start_frame = get_starting_frame(location, recording, threshold=22.)
 
     gaze_file_path = os.path.join(location, recording, "exports")
     assert (len(os.listdir(gaze_file_path)) == 1)  # Make sure there is exactly one export result
@@ -79,7 +79,7 @@ def gaze_to_frame(location, recording, framerate=60, correction_function=lambda 
                     temp = average_gaze(data_points)
                     x, y = correction_function(temp[0], temp[1])
                     x = resolution[0]*x
-                    y = resolution[1]*y
+                    y = resolution[1] - resolution[1]*y
 
                     if in_frame((x, y), resolution):
                         final_data.append((x, y,))
