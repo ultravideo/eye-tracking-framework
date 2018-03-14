@@ -1,4 +1,5 @@
 from csv import reader
+import numpy as np
 
 # Index definitions
 WORLD_TIMESTAMP = 0
@@ -12,7 +13,7 @@ ON_SRF = 7
 CONFIDENCE = 8
 
 GAZE_STAMP_THRESHOLD = 0.0043 # If time between two gaze data points is larger than this, there's a gap
-BLINK_REMOVE_THRESHOLD = 0.1 # This amount in seconds is removed before and after a detected gap
+BLINK_REMOVE_THRESHOLD = 0.2 # This amount in seconds is removed before and after a detected gap
 CLUSTER_THRESHOLD = 5 # If there are less than 5 gaps in a cluster, ignore gap
 
 def filter_gaps(csv_file_path, start_frame):

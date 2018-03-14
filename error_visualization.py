@@ -1,4 +1,5 @@
 import os
+import math
 import numpy as np
 import time
 
@@ -6,17 +7,10 @@ import matplotlib.pyplot as plt
 
 from filter_gaps import filter_gaps
 from get_starting_frame import get_starting_frame
+from get_starting_frame import get_calibration_point_intervals
 
-# Index definitions
-WORLD_TIMESTAMP = 0
-WORLD_FRAME_IDX = 1
-GAZE_TIMESTAMP = 2
-X_NORM = 3
-Y_NORM = 4
-X_SCALED = 5
-Y_SCALED = 6
-ON_SRF = 7
-CONFIDENCE = 8
+# Definitions
+FIXATION_TOLERANCE = 0.1 # How much gaze is allowed to vary during a fixation
 
 def error_visualization(test_dir):
     """
@@ -47,16 +41,54 @@ def error_visualization(test_dir):
 
         final_data = filter_gaps(csv_file_path, start_frame)
 
-        # Draw a plot
-        #plt.plot([row[1] for row in filtered_data], [row[2] for row in filtered_data], 'b.')
-        #plt.plot([row[1] for row in eliminated_data], [row[2] for row in eliminated_data], 'r.')
-        #plt.plot()
-        #plt.legend(['x_norm', 'y_norm'])
-        #plt.axis('off')
-        #plt.axis([plot_x_start, plot_x_end, 0, 1])
-        #plt.axis('scaled')
-        #plt.show()
+        # From final data, 5 fixations must be found
+        # A steady segment where gaze x- and y-coordinates do not fluctuate
+        # is considered a valid fixation.
 
+        x = []
+        y = []
+        fixations = []
+        previous_point = 0
+        fixation_start = 0
+        fixation_end = 0
+        fixation_length = 0
+        written = False
+
+
+        for item in final_data:
+            x.append(item[1])
+            point = math.sqrt(float(item[2])**2 + float(item[3])**2)
+            y.append(point)
+
+            if previous_point == 0:
+                fixation_start = item[1]
+                fixation_end = item[1]
+                fixation_length += 1
+            else:
+                if math.fabs(previous_point - point) > FIXATION_TOLERANCE:
+                    # Difference between the two points is too great, end fixation
+                    fixation_end = item[1]
+                    fixations.append([fixation_length, fixation_start, fixation_end])
+                    written = True
+                    fixation_start = fixation_end
+                    fixation_length = 1
+                else:
+                    # Difference is within tolerance, continue fixation
+                    fixation_end = item[1]
+                    fixation_length += 1
+                    written = False
+
+            previous_point = point
+
+        if not written:
+            fixations.append([fixation_length, fixation_start, fixation_end])
+        print("Fixations found: " + str(len(fixations)))
+        for fixation in fixations:
+            print("Length: " + str(fixation[0]) + " Time " + str(fixation[1]) + " - " + str(fixation[2]))
+
+        #plt.plot(x, y)
+        #plt.axis('off')
+        #plt.show()
 
 if __name__ == '__main__':
     # Test data root folder
