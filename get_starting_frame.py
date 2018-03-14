@@ -14,6 +14,10 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
     video = cv2.VideoCapture(video_file_path)
 
     csv_file_path = os.path.join(location, recording, "exports")
+    if not os.path.isdir(csv_file_path):
+        print("Exports missing for calibration. " + os.path.abspath(csv_file_path) + " not found.")
+        return
+
     assert (len(os.listdir(csv_file_path)) == 1)  # Make sure there is exactly one export result
 
     csv_file_path = os.path.join(csv_file_path, os.listdir(csv_file_path)[0], "surfaces")
@@ -83,16 +87,19 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
 
         average = np.average(warp[int(cp_centers[current_point][1]-cp_radius):int(cp_centers[current_point][1]+cp_radius), \
                          int(cp_centers[current_point][0]-cp_radius):int(cp_centers[current_point][0]+cp_radius)])
-        print("CP: " + str(current_point) + " Avg: " + str(average))
 
-        cv2.imshow("Full", warp[:, :])
-        cv2.imshow("Test", warp[int(cp_centers[current_point][1]-cp_radius):int(cp_centers[current_point][1]+cp_radius), \
-                           int(cp_centers[current_point][0]-cp_radius):int(cp_centers[current_point][0]+cp_radius)])
+        # Debug
+        #print("CP: " + str(current_point) + " Avg: " + str(average))
+        #cv2.imshow("Full", warp[:, :])
+        #cv2.imshow("Test", warp[int(cp_centers[current_point][1]-cp_radius):int(cp_centers[current_point][1]+cp_radius), \
+        #                   int(cp_centers[current_point][0]-cp_radius):int(cp_centers[current_point][0]+cp_radius)])
+
         if frame > staring_frame:
             if average < cp_start_threshold and not started:
                 cp_start_frame = frame
                 started = True
             if average > cp_end_threshold and started:
+                interval_get = True
                 cp_end_frame = frame
                 current_point += 1
                 started = False
@@ -105,6 +112,8 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
             interval_get = False
 
         frame += 1
+
+    return intervals
 
 def get_starting_frame(location, recording="000", threshold=15.):
     """

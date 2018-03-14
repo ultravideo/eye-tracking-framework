@@ -2,7 +2,7 @@ import os
 import fnmatch
 import shutil
 
-root = "."
+root = r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results"
 export_path_root = root + "\\export\\"
 
 # create test data folder if it doesn't exists
