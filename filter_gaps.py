@@ -12,12 +12,12 @@ Y_SCALED = 6
 ON_SRF = 7
 CONFIDENCE = 8
 
-GAZE_STAMP_THRESHOLD = 0.0043 # If time between two gaze data points is larger than this, there's a gap
-BLINK_REMOVE_THRESHOLD = 0.2 # This amount in seconds is removed before and after a detected gap
-CLUSTER_THRESHOLD = 5 # If there are less than 5 gaps in a cluster, ignore gap
+GAZE_STAMP_THRESHOLD = 0.0043  # If time between two gaze data points is larger than this, there's a gap
+BLINK_REMOVE_THRESHOLD = 0.2  # This amount in seconds is removed before and after a detected gap
+CLUSTER_THRESHOLD = 5  # If there are less than 5 gaps in a cluster, ignore gap
+
 
 def filter_gaps(csv_file_path, start_frame):
-
     data = []
     indexes = [WORLD_FRAME_IDX, GAZE_TIMESTAMP, X_NORM, Y_NORM]  # Select the indexes to be saved
     gaps = []  # Find gaps in data points
@@ -105,7 +105,7 @@ def filter_gaps(csv_file_path, start_frame):
         if final_gaps[next_gap][2] - final_gaps[next_gap][1] < BLINK_REMOVE_THRESHOLD or final_gaps[next_gap][
             0] < CLUSTER_THRESHOLD:
             if (float(row[1]) > (final_gaps[next_gap][1] - BLINK_REMOVE_THRESHOLD)) and (
-                float(row[1]) < (final_gaps[next_gap][2] + BLINK_REMOVE_THRESHOLD)):
+                        float(row[1]) < (final_gaps[next_gap][2] + BLINK_REMOVE_THRESHOLD)):
                 # Current items timestamp is inside elimination threshold
                 eliminated_data.append(row)
             else:

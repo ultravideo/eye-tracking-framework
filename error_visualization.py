@@ -10,7 +10,8 @@ from get_starting_frame import get_starting_frame
 from get_starting_frame import get_calibration_point_intervals
 
 # Definitions
-FIXATION_TOLERANCE = 0.1 # How much gaze is allowed to vary during a fixation
+FIXATION_TOLERANCE = 0.1  # How much gaze is allowed to vary during a fixation
+
 
 def error_visualization(test_dir):
     """
@@ -26,7 +27,7 @@ def error_visualization(test_dir):
 
     # Last 8 entries will be the calibration check videos
     # TODO: Fix this line to include last 8 entries after testing
-    for cdir in [calibrations[1],]:
+    for cdir in [calibrations[1], ]:
         print("Processing calibration " + cdir)
         # Get the starting frame for current video
         start_frame = get_starting_frame(calibrations_root, cdir, threshold=200)
@@ -54,10 +55,9 @@ def error_visualization(test_dir):
         fixation_length = 0
         written = False
 
-
         for item in final_data:
             x.append(item[1])
-            point = math.sqrt(float(item[2])**2 + float(item[3])**2)
+            point = math.sqrt(float(item[2]) ** 2 + float(item[3]) ** 2)
             y.append(point)
 
             if previous_point == 0:
@@ -86,9 +86,10 @@ def error_visualization(test_dir):
         for fixation in fixations:
             print("Length: " + str(fixation[0]) + " Time " + str(fixation[1]) + " - " + str(fixation[2]))
 
-        #plt.plot(x, y)
-        #plt.axis('off')
-        #plt.show()
+            # plt.plot(x, y)
+            # plt.axis('off')
+            # plt.show()
+
 
 if __name__ == '__main__':
     # Test data root folder
