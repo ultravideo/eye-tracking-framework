@@ -7,14 +7,23 @@ import os
 root = r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results"
 datafile = os.path.join(root, "data.json")
 
+faulty_data = 0
+correct_data = 0
+
 with open(datafile) as file:
     stuff = json.load(file)
     for subject in stuff:
         print(subject[0])
         for calib in subject[1]:
-            print(calib[0])
-            if not calib[1] == None:
-                for interval in calib[1]:
-                    print(interval)
+            if len(calib[1]) != 5:
+                print("Points missing in " + calib[0] + ". " + str(len(calib[1])) + " found.")
+                faulty_data += 1
             else:
-                print(None)
+                correct_data += 1
+            # if not calib[1] == None:
+            #     for interval in calib[1]:
+            #         print(interval)
+            # else:
+            #     print(None)
+print("Faulty data : " + str(faulty_data))
+print("Correct data: " + str(correct_data))

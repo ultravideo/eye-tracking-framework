@@ -4,11 +4,11 @@ import json
 from get_starting_frame import get_calibration_point_intervals
 
 root = r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results"
-export_path_root = root + "\\export\\"
+export_path_root = os.path.join(root, "export")
 
 # create test data folder if it doesn't exists
 if not os.path.isdir(export_path_root):
-    os.makedirs("export")
+    os.makedirs(export_path_root)
 # Go through all experiment folders
 # Each folder contains all data for one experiment instance
 

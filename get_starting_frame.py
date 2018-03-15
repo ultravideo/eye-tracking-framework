@@ -41,17 +41,17 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
     # Expected calibration point locations
     # Note, in the eye capture software, y-axis is positive upwards
     # In openCV, it's positive downwards
-    cp_radius = 100
+    cp_radius = 120
     cp_centers = [
         [0.5 * width, 0.5 * height],
-        [0.25 * width, 0.70 * height],
-        [0.25 * width, 0.30 * height],
-        [0.75 * width, 0.30 * height],
-        [0.75 * width, 0.70 * height],
+        [0.27 * width, 0.70 * height],
+        [0.27 * width, 0.30 * height],
+        [0.73 * width, 0.30 * height],
+        [0.73 * width, 0.70 * height],
     ]
     # Detection thresholds
-    cp_start_threshold = 150  # When a calibration point is visible, the sub image average is under this value
-    cp_end_threshold = 160  # When point is fading out, it is considered done when the average is over this
+    cp_start_threshold = 170  # When a calibration point is visible, the sub image average is under this value
+    cp_end_threshold = 170  # When point is fading out, it is considered done when the average is over this
 
     current_point = 0
     cp_start_frame = 0
@@ -91,9 +91,9 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
             int(cp_centers[current_point][0] - cp_radius):int(cp_centers[current_point][0] + cp_radius)])
 
         # Debug
-        #print("CP: " + str(current_point) + " Avg: " + str(average))
-        #cv2.imshow("Full", warp[:, :])
-        #cv2.imshow("Test", warp[int(cp_centers[current_point][1]-cp_radius):int(cp_centers[current_point][1]+cp_radius), \
+        # print("CP: " + str(current_point) + " Avg: " + str(average))
+        # cv2.imshow("Full", warp[:, :])
+        # cv2.imshow("Test", warp[int(cp_centers[current_point][1]-cp_radius):int(cp_centers[current_point][1]+cp_radius), \
         #                   int(cp_centers[current_point][0]-cp_radius):int(cp_centers[current_point][0]+cp_radius)])
 
         if frame > staring_frame:
@@ -107,8 +107,11 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
                 #print("Point fade out detected")
                 interval_get = True
                 cp_end_frame = frame
+                if current_point == 4:
+                    break
                 current_point += 1
                 started = False
+
 
 
         if interval_get:
@@ -188,4 +191,4 @@ def get_starting_frame(location, recording="000", threshold=15.):
 
 if __name__ == "__main__":
     print(get_calibration_point_intervals(
-        r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results\6-m-23\calibrations", "004"))
+        r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results\0-f-35\calibrations", "001"))
