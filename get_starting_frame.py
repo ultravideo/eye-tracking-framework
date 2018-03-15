@@ -44,10 +44,10 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
     cp_radius = 100
     cp_centers = [
         [0.5 * width, 0.5 * height],
-        [0.25 * width, 0.75 * height],
-        [0.25 * width, 0.25 * height],
-        [0.75 * width, 0.25 * height],
-        [0.75 * width, 0.75 * height],
+        [0.25 * width, 0.70 * height],
+        [0.25 * width, 0.30 * height],
+        [0.75 * width, 0.30 * height],
+        [0.75 * width, 0.70 * height],
     ]
     # Detection thresholds
     cp_start_threshold = 150  # When a calibration point is visible, the sub image average is under this value
@@ -98,14 +98,18 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
 
         if frame > staring_frame:
             if average < cp_start_threshold and not started:
+                # Debug
+                #print("Point fade in detected")
                 cp_start_frame = frame
                 started = True
             if average > cp_end_threshold and started:
+                # Debug
+                #print("Point fade out detected")
                 interval_get = True
                 cp_end_frame = frame
                 current_point += 1
                 started = False
-        cv2.waitKey()
+
 
         if interval_get:
             intervals.append([cp_start_frame, cp_end_frame])
@@ -114,6 +118,12 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
             interval_get = False
 
         frame += 1
+        cv2.waitKey()
+
+    # Sometimes video may end too early and the end of the last point won't be saved inside the loop
+    if started:
+        cp_end_frame = frame - 1
+        intervals.append([cp_start_frame, cp_end_frame])
 
     return intervals
 
@@ -178,4 +188,4 @@ def get_starting_frame(location, recording="000", threshold=15.):
 
 if __name__ == "__main__":
     print(get_calibration_point_intervals(
-        r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results\6-m-23\calibrations", "001"))
+        r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results\6-m-23\calibrations", "004"))

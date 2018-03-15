@@ -30,9 +30,9 @@ for dir in os.listdir(root):
             times = []
             for calibration in calibrations[-8:]:
                 print("Processing calibration " + calibration)
-                times.append([dir, get_calibration_point_intervals(calibs_dir, calibration)])
+                times.append([calibration, get_calibration_point_intervals(calibs_dir, calibration)])
 
-            data.append(times)
+            data.append([dir, times])
 
         else:
             print("Calibrations for subject " + dir + " do not exist")
