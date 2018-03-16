@@ -91,10 +91,10 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
             int(cp_centers[current_point][0] - cp_radius):int(cp_centers[current_point][0] + cp_radius)])
 
         # Debug
-        # print("CP: " + str(current_point) + " Avg: " + str(average))
-        # cv2.imshow("Full", warp[:, :])
-        # cv2.imshow("Test", warp[int(cp_centers[current_point][1]-cp_radius):int(cp_centers[current_point][1]+cp_radius), \
-        #                   int(cp_centers[current_point][0]-cp_radius):int(cp_centers[current_point][0]+cp_radius)])
+        print("CP: " + str(current_point) + " Avg: " + str(average))
+        cv2.imshow("Full", warp[:, :])
+        cv2.imshow("Test", warp[int(cp_centers[current_point][1]-cp_radius):int(cp_centers[current_point][1]+cp_radius), \
+                          int(cp_centers[current_point][0]-cp_radius):int(cp_centers[current_point][0]+cp_radius)])
 
         if frame > staring_frame:
             if average < cp_start_threshold and not started:
@@ -191,4 +191,4 @@ def get_starting_frame(location, recording="000", threshold=15.):
 
 if __name__ == "__main__":
     print(get_calibration_point_intervals(
-        r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results\0-f-35\calibrations", "001"))
+        r"D:\actual_eyetrack_results\13-m-32\calibrations", "009"))

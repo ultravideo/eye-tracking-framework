@@ -10,6 +10,20 @@ datafile = os.path.join(root, "data.json")
 faulty_data = 0
 correct_data = 0
 
+# Calibration point data
+data = []
+for i in range(5):
+    data.append({ 'start_time_min': None,
+                  'start_time_max': None,
+                  'start_time_avg': 0,
+                  'end_time_min': None,
+                  'end_time_max': None,
+                  'end_time_avg': 0,
+                  'length_min': None,
+                  'length_max': None,
+                  'length_avg': 0
+                  })
+
 with open(datafile) as file:
     stuff = json.load(file)
     for subject in stuff:
@@ -19,6 +33,29 @@ with open(datafile) as file:
                 print("Points missing in " + calib[0] + ". " + str(len(calib[1])) + " found.")
                 faulty_data += 1
             else:
+                print(calib[0])
+                for i in range(5):
+                    print("Start " + str(calib[1][i][0]) + " End " + str(calib[1][i][1]))
+                    # Minimum start time
+                    if data[i]['start_time_min'] == None or calib[1][i][0] < data[i]['start_time_min']:
+                        data[i]['start_time_min'] = calib[1][i][0]
+
+                    # Maximum start time
+                    if data[i]['start_time_max'] == None or calib[1][i][0] > data[i]['start_time_max']:
+                        data[i]['start_time_max'] = calib[1][i][0]
+
+                    data[i]['start_time_avg'] += calib[1][i][0]
+
+                    # Minimum end time
+                    if data[i]['end_time_min'] == None or calib[1][i][1] < data[i]['end_time_min']:
+                        data[i]['end_time_min'] = calib[1][i][1]
+
+                    # Maximum end time
+                    if data[i]['end_time_max'] == None or calib[1][i][1] > data[i]['end_time_max']:
+                        data[i]['end_time_max'] = calib[1][i][1]
+
+                    data[i]['end_time_avg'] += calib[1][i][1]
+
                 correct_data += 1
             # if not calib[1] == None:
             #     for interval in calib[1]:
@@ -27,3 +64,10 @@ with open(datafile) as file:
             #     print(None)
 print("Faulty data : " + str(faulty_data))
 print("Correct data: " + str(correct_data))
+
+for i in range(5):
+    data[i]['start_time_avg'] /= correct_data
+    data[i]['end_time_avg'] /= correct_data
+
+for point in data:
+    print(point)
