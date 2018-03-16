@@ -56,6 +56,14 @@ with open(datafile) as file:
 
                     data[i]['end_time_avg'] += calib[1][i][1]
 
+                    # Point visibility length
+                    length = calib[1][i][1] - calib[1][i][0]
+                    if data[i]['length_min'] == None or length < data[i]['length_min']:
+                        data[i]['length_min'] = length
+                    if data[i]['length_max'] == None or length > data[i]['length_max']:
+                        data[i]['length_max'] = length
+                    data[i]['length_avg'] += length
+
                 correct_data += 1
             # if not calib[1] == None:
             #     for interval in calib[1]:
@@ -68,6 +76,7 @@ print("Correct data: " + str(correct_data))
 for i in range(5):
     data[i]['start_time_avg'] /= correct_data
     data[i]['end_time_avg'] /= correct_data
+    data[i]['length_avg'] /= correct_data
 
 for point in data:
     print(point)
