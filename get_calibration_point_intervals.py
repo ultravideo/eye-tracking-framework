@@ -91,10 +91,10 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
             int(cp_centers[current_point][0] - cp_radius):int(cp_centers[current_point][0] + cp_radius)])
 
         # Debug
-        print("CP: " + str(current_point) + " Avg: " + str(average))
-        cv2.imshow("Full", warp[:, :])
-        cv2.imshow("Test", warp[int(cp_centers[current_point][1]-cp_radius):int(cp_centers[current_point][1]+cp_radius), \
-                          int(cp_centers[current_point][0]-cp_radius):int(cp_centers[current_point][0]+cp_radius)])
+        # print("CP: " + str(current_point) + " Avg: " + str(average))
+        # cv2.imshow("Full", warp[:, :])
+        # cv2.imshow("Test", warp[int(cp_centers[current_point][1]-cp_radius):int(cp_centers[current_point][1]+cp_radius), \
+        #                   int(cp_centers[current_point][0]-cp_radius):int(cp_centers[current_point][0]+cp_radius)])
 
         if frame > staring_frame:
             if average < cp_start_threshold and not started:
