@@ -3,11 +3,10 @@ import numpy as np
 import os
 from csv import reader
 
-def analyze_cp_brightness(location, recording="000"):
+def analyze_cp_brightness(location, recording="000", starting_frame=10):
     """
     Analyze the brightness level of the regions where calibration points appear
     """
-    print("Arse")
     video_file_path = os.path.join(location, recording, "world.mp4")
     video = cv2.VideoCapture(video_file_path)
 
@@ -30,6 +29,7 @@ def analyze_cp_brightness(location, recording="000"):
 
     width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
 
     # Expected calibration point locations
     # Note, in the eye capture software, y-axis is positive upwards
@@ -45,6 +45,9 @@ def analyze_cp_brightness(location, recording="000"):
 
     min_brightness = [255, 255, 255, 255, 255]
     frame = 0
+
+    # Debug
+    # print("Frames to process: " + str(frames))
 
     while video.grab():
         data = datareader.__next__()
@@ -71,16 +74,21 @@ def analyze_cp_brightness(location, recording="000"):
         warp = cv2.warpPerspective(image, trans_mat2, dsize=(width, height))
 
         # Find the minimum brightness for all the expected calibration point locations
-        for i in range(5):
-            average = np.average(
-                warp[int(cp_centers[i][1] - cp_radius):int(cp_centers[i][1] + cp_radius), \
-                int(cp_centers[i][0] - cp_radius):int(cp_centers[i][0] + cp_radius)])
-            if average < min_brightness[i]:
-                min_brightness[i] = average
+        if frame >= starting_frame: # Skip starting frames
+            if frame != (frames-1): # Skip last frame, it's usually a black screen
+                for i in range(5):
+                    average = np.average(
+                        warp[int(cp_centers[i][1] - cp_radius):int(cp_centers[i][1] + cp_radius), \
+                        int(cp_centers[i][0] - cp_radius):int(cp_centers[i][0] + cp_radius)])
+                    if average < min_brightness[i]:
+                        min_brightness[i] = average
+
+        frame += 1
+    # Debug
+    # print("Processed frames: " + str(frame))
 
     return min_brightness
 
 if __name__ == 'main':
-    print("Eat my ass")
     print(analyze_cp_brightness(
         r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results\22-f-25\calibrations", "009"))
