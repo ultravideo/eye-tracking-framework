@@ -1,4 +1,3 @@
-from time import sleep
 import cv2
 import numpy as np
 import os
@@ -15,6 +14,10 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
     video = cv2.VideoCapture(video_file_path)
 
     csv_file_path = os.path.join(location, recording, "exports")
+    brightness_file_path = os.path.normpath(os.path.join(location, "../../cp_brightness.json"))
+
+    # print("Brightness path: " + brightness_file_path)
+
     if not os.path.isdir(csv_file_path):
         print("Exports missing for calibration. " + os.path.abspath(csv_file_path) + " not found.")
         return
@@ -49,7 +52,8 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
         [0.73 * width, 0.30 * height],
         [0.73 * width, 0.70 * height],
     ]
-    # Detection thresholds
+    # Detection thresholds will be loaded from a file
+    # which is created by another script
     cp_start_threshold = 170  # When a calibration point is visible, the sub image average is under this value
     cp_end_threshold = 170  # When point is fading out, it is considered done when the average is over this
 
@@ -130,6 +134,6 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
 
     return intervals
 
-if __name__ == 'main':
+if __name__ == '__main__':
     print(get_calibration_point_intervals(
-        r"D:\actual_eyetrack_results\13-m-32\calibrations", "009"))
+        r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results\0-f-35\calibrations", "001"))

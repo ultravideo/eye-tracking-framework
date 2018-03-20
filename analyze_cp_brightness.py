@@ -89,6 +89,6 @@ def analyze_cp_brightness(location, recording="000", starting_frame=10):
 
     return min_brightness
 
-if __name__ == 'main':
+if __name__ == '__main__':
     print(analyze_cp_brightness(
         r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results\22-f-25\calibrations", "009"))
