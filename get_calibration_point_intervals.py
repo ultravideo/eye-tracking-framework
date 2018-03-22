@@ -60,6 +60,10 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
     # then the point is considered to be visible.
     cp_visibility_threshold = 30
 
+    # After becoming visible, when the minimum is over this value
+    # the point is considered to be faded out
+    cp_fade_out_threshold = 50
+
     current_point = 0
     cp_start_frame = 0
     cp_end_frame = 0
@@ -113,7 +117,7 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
                 #print("Point fade in detected")
                 cp_start_frame = frame
                 started = True
-            if minimum > cp_visibility_threshold and started:
+            if minimum > cp_fade_out_threshold and started:
                 # Debug
                 #print("Point fade out detected")
                 interval_get = True
@@ -143,4 +147,4 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
 
 if __name__ == '__main__':
     print(get_calibration_point_intervals(
-        r"D:\actual_eyetrack_results\28-f-23\calibrations", "007"))
+        r"D:\actual_eyetrack_results\24-f-32\calibrations", "001"))
