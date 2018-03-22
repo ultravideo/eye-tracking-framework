@@ -10,6 +10,8 @@ datafile = os.path.join(root, "data.json")
 faulty_data = 0
 correct_data = 0
 
+anomalies = []
+
 # Calibration point data
 data = []
 for i in range(5):
@@ -58,6 +60,9 @@ with open(datafile) as file:
 
                     # Point visibility length
                     length = calib[1][i][1] - calib[1][i][0]
+                    if length < 50:
+                        print("Anomaly detected: " + subject[0] + " Calib: " + calib[0] + "Length: " + str(length))
+                        anomalies.append([subject[0], calib[0], i, length])
                     if data[i]['length_min'] == None or length < data[i]['length_min']:
                         data[i]['length_min'] = length
                     if data[i]['length_max'] == None or length > data[i]['length_max']:
@@ -80,3 +85,6 @@ for i in range(5):
 
 for point in data:
     print(point)
+
+for anomaly in anomalies:
+    print(anomaly)

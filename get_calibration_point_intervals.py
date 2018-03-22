@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 import os
 from csv import reader
-import json
 
 
 def get_calibration_point_intervals(location, recording="000", staring_frame=10):
@@ -56,24 +55,10 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
         [0.73 * width, 0.30 * height],
         [0.73 * width, 0.70 * height],
     ]
-    # Detection thresholds will be loaded from a file
-    # which is created by another script
 
-    with open(brightness_file) as br_file:
-        br_data = json.load(br_file)
-        # Check if data for current subject exists
-        if subject in br_data:
-            # print("Found")
-            # print(br_data[subject][recording])
-            cp_brightness = br_data[subject][recording]
-        else:
-            print("No data found for subject " + subject)
-            return
-
-
-    # When sub screen brightness average is below the pre-calculated point brightness + this
+    # When sub screen brightness minimum is below this
     # then the point is considered to be visible.
-    cp_visibility_threshold = 20
+    cp_visibility_threshold = 30
 
     current_point = 0
     cp_start_frame = 0
@@ -108,23 +93,27 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
 
         warp = cv2.warpPerspective(image, trans_mat2, dsize=(width, height))
 
-        average = np.average(
+        minimum = np.min(
             warp[int(cp_centers[current_point][1] - cp_radius):int(cp_centers[current_point][1] + cp_radius), \
             int(cp_centers[current_point][0] - cp_radius):int(cp_centers[current_point][0] + cp_radius)])
 
+        # average = np.average(
+        #     warp[int(cp_centers[current_point][1] - cp_radius):int(cp_centers[current_point][1] + cp_radius), \
+        #     int(cp_centers[current_point][0] - cp_radius):int(cp_centers[current_point][0] + cp_radius)])
+
         # Debug
-        # print("CP: " + str(current_point) + " Avg: " + str(average))
+        # print("CP: " + str(current_point) + " Min: " + str(minimum))
         # cv2.imshow("Full", warp[:, :])
         # cv2.imshow("Test", warp[int(cp_centers[current_point][1]-cp_radius):int(cp_centers[current_point][1]+cp_radius), \
         #                   int(cp_centers[current_point][0]-cp_radius):int(cp_centers[current_point][0]+cp_radius)])
 
         if frame > staring_frame:
-            if average < (cp_brightness[current_point]+cp_visibility_threshold) and not started:
+            if minimum < cp_visibility_threshold and not started:
                 # Debug
                 #print("Point fade in detected")
                 cp_start_frame = frame
                 started = True
-            if average > (cp_brightness[current_point]+cp_visibility_threshold) and started:
+            if minimum > cp_visibility_threshold and started:
                 # Debug
                 #print("Point fade out detected")
                 interval_get = True
@@ -154,4 +143,4 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
 
 if __name__ == '__main__':
     print(get_calibration_point_intervals(
-        r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results\0-f-35\calibrations", "001"))
+        r"D:\actual_eyetrack_results\28-f-23\calibrations", "007"))
