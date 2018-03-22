@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import os
 from csv import reader
+import json
 
 
 def get_calibration_point_intervals(location, recording="000", staring_frame=10):
@@ -14,9 +15,12 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
     video = cv2.VideoCapture(video_file_path)
 
     csv_file_path = os.path.join(location, recording, "exports")
-    brightness_file_path = os.path.normpath(os.path.join(location, "../../cp_brightness.json"))
+    brightness_file = os.path.normpath(os.path.join(location, "../../cp_brightness_dict.json"))
+    subject_dir = os.path.normpath(os.path.join(location, "../"))
+    subject = os.path.basename(subject_dir)
 
-    # print("Brightness path: " + brightness_file_path)
+    # print("Brightness path: " + brightness_file)
+    print("Processing " + subject + " : " + recording)
 
     if not os.path.isdir(csv_file_path):
         print("Exports missing for calibration. " + os.path.abspath(csv_file_path) + " not found.")
@@ -54,8 +58,22 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
     ]
     # Detection thresholds will be loaded from a file
     # which is created by another script
-    cp_start_threshold = 170  # When a calibration point is visible, the sub image average is under this value
-    cp_end_threshold = 170  # When point is fading out, it is considered done when the average is over this
+
+    with open(brightness_file) as br_file:
+        br_data = json.load(br_file)
+        # Check if data for current subject exists
+        if subject in br_data:
+            # print("Found")
+            # print(br_data[subject][recording])
+            cp_brightness = br_data[subject][recording]
+        else:
+            print("No data found for subject " + subject)
+            return
+
+
+    # When sub screen brightness average is below the pre-calculated point brightness + this
+    # then the point is considered to be visible.
+    cp_visibility_threshold = 20
 
     current_point = 0
     cp_start_frame = 0
@@ -101,12 +119,12 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
         #                   int(cp_centers[current_point][0]-cp_radius):int(cp_centers[current_point][0]+cp_radius)])
 
         if frame > staring_frame:
-            if average < cp_start_threshold and not started:
+            if average < (cp_brightness[current_point]+cp_visibility_threshold) and not started:
                 # Debug
                 #print("Point fade in detected")
                 cp_start_frame = frame
                 started = True
-            if average > cp_end_threshold and started:
+            if average > (cp_brightness[current_point]+cp_visibility_threshold) and started:
                 # Debug
                 #print("Point fade out detected")
                 interval_get = True
