@@ -20,7 +20,7 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
     subject = os.path.basename(subject_dir)
 
     # print("Brightness path: " + brightness_file)
-    print("Processing " + subject + " : " + recording)
+    # print("Processing " + subject + " : " + recording)
 
     if not os.path.isdir(csv_file_path):
         print("Exports missing for calibration. " + os.path.abspath(csv_file_path) + " not found.")
