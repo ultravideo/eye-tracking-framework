@@ -1,7 +1,7 @@
 # Check and log the start and end times of all calibration points in all calibration videos
 import os
 import json
-from get_starting_frame import get_calibration_point_intervals
+from get_calibration_point_intervals import get_calibration_point_intervals
 
 root = r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results"
 export_path_root = os.path.join(root, "export")
