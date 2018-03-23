@@ -3,7 +3,7 @@ import fnmatch
 import shutil
 
 root = r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results"
-export_path_root = root + "\\export\\"
+export_path_root = os.path.join(root, "export")
 
 # create test data folder if it doesn't exists
 if not os.path.isdir(export_path_root):
