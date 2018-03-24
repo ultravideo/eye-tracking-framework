@@ -18,6 +18,10 @@ CLUSTER_THRESHOLD = 5  # If there are less than 5 gaps in a cluster, ignore gap
 
 
 def filter_gaps(csv_file_path, start_frame):
+    """
+    Filters out gaps in collected data. The goal is to filter out
+    gaps caused by the subject blinking
+    """
     data = []
     indexes = [WORLD_FRAME_IDX, GAZE_TIMESTAMP, X_NORM, Y_NORM]  # Select the indexes to be saved
     gaps = []  # Find gaps in data points
