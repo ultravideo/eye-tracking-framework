@@ -53,13 +53,24 @@ def get_calibration_error(location, recording="000"):
         [0.75, 0.25] # Down right
     ]
 
-    # Start calculating the error from the starting frame of the first interval
+    gaze_error = []
     current_point = 0
+    error_sum_x = 0
+    error_sum_y = 0
 
-    for row in gaze_points:
-        print(row)
+    # Go through each point interval and calculate gaze error
+    for point in points:
+        interval = [ i for i in gaze_points if(i[0] >= point[0] and i[0] <= point[1])]
+        for row in interval:
+            error_sum_x += cp_locations[current_point][0] - row[1]
+            error_sum_y += cp_locations[current_point][1] - row[2]
 
-    print(points)
+        gaze_error.append([error_sum_x/len(interval), error_sum_y/len(interval)])
+        error_sum_x = 0
+        error_sum_y = 0
+        current_point += 1
+
+    return gaze_error
 
 if __name__ == "__main__":
     print(get_calibration_error(
