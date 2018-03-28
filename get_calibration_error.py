@@ -1,11 +1,12 @@
 import os.path
 import json
-from compress_gaze_points import compress_gaze_points
+from math import fabs
 
+from compress_gaze_points import compress_gaze_points
 from filter_gaps import filter_gaps
 
 
-def get_calibration_error(location, recording="000"):
+def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
     """
     Calculates and returns the error for given calibration video.
     The function reads the gathered gaze points and compares them to the
@@ -13,6 +14,8 @@ def get_calibration_error(location, recording="000"):
     
     location is the calibrations root folder for a given subject
     recording is the calibration recording folder name eg. "001"
+    k is the number of neighbors in k-NN method. This is used to detect outliers
+    threshold is the value used in k-NN method. Points closer to this are considered near neighbors
     """
 
     csv_file_path = os.path.join(location, recording, "exports")
@@ -61,11 +64,54 @@ def get_calibration_error(location, recording="000"):
     # Go through each point interval and calculate gaze error
     for point in points:
         interval = [ i for i in gaze_points if(i[0] >= point[0] and i[0] <= point[1])]
+        error_x = []
+        error_y = []
+        error_comb = []
         for row in interval:
-            error_sum_x += cp_locations[current_point][0] - row[1]
-            error_sum_y += cp_locations[current_point][1] - row[2]
+            error_x_tmp = cp_locations[current_point][0] - row[1]
+            error_y_tmp = cp_locations[current_point][1] - row[2]
+            error_sum_x += error_x_tmp
+            error_sum_y += error_y_tmp
+            error_x.append(error_x_tmp)
+            error_y.append(error_y_tmp)
+            error_comb.append(fabs(error_x_tmp)+fabs(error_y_tmp))
 
-        gaze_error.append([error_sum_x/len(interval), error_sum_y/len(interval)])
+            #print("Error x: " +str(error_x_tmp) + " y: " + str(error_y_tmp))
+
+        # Group error values together by calibration point index
+        gaze_error.append([error_x, error_y, error_comb])
+
+        # Check points for outliers using k-NN
+        outlier_indices = []
+        index = 0
+        neighbors = 0
+        valid = False
+        for value in gaze_error[current_point][2]:
+            compare_index = 0
+            # Compare against all other points
+            for compare in gaze_error[current_point][2]:
+                # Skip if comparing same index
+                if not index == compare_index:
+                    if fabs(value - compare) < threshold:
+                        # Neighbor found
+                        neighbors += 1
+                        if neighbors >= k:
+                            # Enough neighbors found
+                            valid = True
+                            break
+                compare_index += 1
+            if not valid:
+                # Mark outlier index
+                outlier_indices.append(index)
+            else:
+                valid = False
+            neighbors = 0
+            index += 1
+
+        print("Outliers detected: " + str(len(outlier_indices)))
+        if len(outlier_indices) > 0:
+            print(outlier_indices)
+
         error_sum_x = 0
         error_sum_y = 0
         current_point += 1
