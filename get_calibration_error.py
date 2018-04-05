@@ -4,6 +4,7 @@ from math import fabs
 
 from compress_gaze_points import compress_gaze_points
 from filter_gaps import filter_gaps
+from detect_outliers import detect_outliers
 
 
 def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
@@ -11,6 +12,8 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
     Calculates and returns the error for given calibration video.
     The function reads the gathered gaze points and compares them to the
     expected locations of the calibration points.
+    
+    Returns gaze error points and outlier point indices as arrays
     
     location is the calibrations root folder for a given subject
     recording is the calibration recording folder name eg. "001"
@@ -82,31 +85,7 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
         gaze_error.append([error_x, error_y, error_comb])
 
         # Check points for outliers using k-NN
-        outlier_indices = []
-        index = 0
-        neighbors = 0
-        valid = False
-        for value in gaze_error[current_point][2]:
-            compare_index = 0
-            # Compare against all other points
-            for compare in gaze_error[current_point][2]:
-                # Skip if comparing same index
-                if not index == compare_index:
-                    if fabs(value - compare) < threshold:
-                        # Neighbor found
-                        neighbors += 1
-                        if neighbors >= k:
-                            # Enough neighbors found
-                            valid = True
-                            break
-                compare_index += 1
-            if not valid:
-                # Mark outlier index
-                outlier_indices.append(index)
-            else:
-                valid = False
-            neighbors = 0
-            index += 1
+        outlier_indices = detect_outliers(error_comb)
 
         print("Outliers detected: " + str(len(outlier_indices)))
         if len(outlier_indices) > 0:
@@ -116,7 +95,7 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
         error_sum_y = 0
         current_point += 1
 
-    return gaze_error
+    return gaze_error, outlier_indices
 
 if __name__ == "__main__":
     print(get_calibration_error(
