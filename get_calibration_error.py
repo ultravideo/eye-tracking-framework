@@ -81,11 +81,12 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
 
             #print("Error x: " +str(error_x_tmp) + " y: " + str(error_y_tmp))
 
-        # Group error values together by calibration point index
-        gaze_error.append([error_x, error_y, error_comb])
-
         # Check points for outliers using k-NN
         outlier_indices = detect_outliers(error_comb)
+        # Group error values together by calibration point index
+        gaze_error.append([error_x, error_y, error_comb, outlier_indices])
+
+
 
         print("Outliers detected: " + str(len(outlier_indices)))
         if len(outlier_indices) > 0:
@@ -95,7 +96,7 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
         error_sum_y = 0
         current_point += 1
 
-    return gaze_error, outlier_indices
+    return gaze_error
 
 if __name__ == "__main__":
     print(get_calibration_error(
