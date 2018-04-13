@@ -10,7 +10,12 @@ from get_calibration_error import get_calibration_error
 from get_calibration_folders import get_calibration_folders
 
 root = r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results"
-export_root = r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\exports"
+export_root = os.path.abspath( os.path.join(root, "..", "exports") )
+
+# Create exports directory if it doesn't exist
+if not os.path.exists(export_root):
+    os.makedirs(export_root)
+
 
 # Iterate through all subjects and calibration videos
 # Save all error figures with outliers marked
@@ -23,8 +28,18 @@ error_summary = {}
 
 pp = pprint.PrettyPrinter(indent=2)
 
+# Calibration point lables
+labels = [ 'Center',
+           'Bottom left',
+           'Top left',
+           'Top right',
+           'Bottom right']
+
 for subject, calibs in folders.items():
-    print("Processing " + subject)
+    # Make export folder for subject
+    subject_dir = os.path.join(export_root, subject)
+    if not os.path.exists(subject_dir):
+        os.makedirs(subject_dir)
 
     calibrations_path = os.path.join(root, subject, "calibrations")
 
@@ -32,16 +47,24 @@ for subject, calibs in folders.items():
     # 1 - 3 first videos are the initial calibrations
     dict_data = {}
     for calibration in calibs[-8:]:
+        print("Processing " + subject + ": " + calibration)
         # Gaze error will be in format:
         # [clibration_point] [ error_x[], error_y[], error_combined[], outlier_indices[] ]
         gaze_error = get_calibration_error(calibrations_path, calibration)
 
         # Draw and save plots. Skip this step if plots exist
         filename = subject + "_" + calibration + ".png"
-        filepath = os.path.join(export_root, filename)
+        filepath = os.path.join(subject_dir, filename)
+
+
         if not os.path.isfile(filepath):
+            fig = plt.figure(figsize=(20, 10))
+
             for i in range(5):
-                plt.subplot(2, 3, i + 1)
+                ax = fig.add_subplot(2, 3, i + 1)
+                ax.set_title(labels[i])
+                ax.grid(color='lightgray', linestyle='--')
+
                 t = range(0, len(gaze_error[i][2]))
                 color = []
                 for ii in range(len(gaze_error[i][2])):
@@ -51,10 +74,10 @@ for subject, calibs in folders.items():
                         color.append('b')
                 # plt.scatter(range(0, len(gaze_error[i][0])), gaze_error[i][0])
                 # plt.scatter(range(0, len(gaze_error[i][1])), gaze_error[i][1])
-                plt.scatter(t, gaze_error[i][2], c=color)
+                ax.scatter(t, gaze_error[i][2], c=color)
 
-            plt.savefig(filepath)
-            plt.clf()
+            fig.savefig(filepath)
+            plt.close(fig)
 
         # Calculate the x and y average error for each calibration point
         # Ignore outliers
@@ -95,118 +118,68 @@ for subject, calibs in folders.items():
 
     #pp.pprint(dict_data)
 
-    # Order error data by calibration point
-    cp0_x = []
-    cp1_x = []
-    cp2_x = []
-    cp3_x = []
-    cp4_x = []
-    cp0_y = []
-    cp1_y = []
-    cp2_y = []
-    cp3_y = []
-    cp4_y = []
-    for key, value in dict_data.items():
-        cp0_x.append(value[0][0])
-        cp1_x.append(value[0][1])
-        cp2_x.append(value[0][2])
-        cp3_x.append(value[0][3])
-        cp4_x.append(value[0][4])
-        cp0_y.append(value[1][0])
-        cp1_y.append(value[1][1])
-        cp2_y.append(value[1][2])
-        cp3_y.append(value[1][3])
-        cp4_y.append(value[1][4])
+    #                                               0       1           2           3           4
+    # Group error data by calibration point index (center, bottom left, top left, top right, bottom right)
+    cp_x = []
+    cp_y = []
+    json_data_calib = {}
+    # Initialize empty lists, one list for each calibration point
+    # Ex. the center calibration point errors are all stored in the same list
+    for i in range(5):
+        cp_x.append([])
+        cp_y.append([])
 
-    #pp.pprint(cp0)
+    for key, value in dict_data.items():
+        for i in range(5):
+            cp_x[i].append(value[0][i])
+            cp_y[i].append(value[1][i])
+
+        # Copy results into json format for output
+        json_data_calib[key] = [cp_x, cp_y]
 
 
     # Save plots. Skip this step if plot already exist
     filename = subject + "_error_summary.png"
-    filepath = os.path.join(export_root, filename)
+    filepath = os.path.join(subject_dir, filename)
     #print(filepath)
     x = range(8)
-    if not os.path.isfile(filepath):
-        plt.figure(figsize=(20, 10))
 
+    colors = ['k', 'red', 'orange', 'c', 'blue']
+    #lines = ['k-', 'darkred-', 'salmon-', 'royalblue-', 'darkblue-']
+
+
+    if not os.path.isfile(filepath):
+        fig = plt.figure(figsize=(20, 20))
         # Plot structure:
         # Subplot 1 = x_error, 2 = y_error
+        ax = fig.add_subplot(2, 1, 1)
+        for i in range(5):
+            ax.set_title("x-error")
+            ax.grid(color='gray', linestyle='--', axis='y')
+            ax.scatter(x, cp_x[i], c=colors[i], label=labels[i])
+            m, b = np.polyfit(x, cp_x[i], 1)
+            ax.plot(x, m*x+b, color=colors[i], linestyle='-')
+            ax.legend(loc="upper left", bbox_to_anchor=(1,1))
 
-        plt.subplot(2, 1, 1)
-        plt.scatter(x, cp0_x, c='b', label='Center')
-        m, b = np.polyfit(x, cp0_x, 1)
-        plt.plot(x, m*x+b, 'b-')
-        plt.scatter(x, cp1_x, c='r', label='Bottom left')
-        m, b = np.polyfit(x, cp1_x, 1)
-        plt.plot(x, m * x + b, 'r-')
-        plt.scatter(x, cp2_x, c='g', label='Top left')
-        m, b = np.polyfit(x, cp2_x, 1)
-        plt.plot(x, m * x + b, 'g-')
-        plt.scatter(x, cp3_x, c='y', label='Top right')
-        m, b = np.polyfit(x, cp3_x, 1)
-        plt.plot(x, m * x + b, 'y-')
-        plt.scatter(x, cp4_x, c='c', label='Bottom right')
-        m, b = np.polyfit(x, cp4_x, 1)
-        plt.plot(x, m * x + b, 'c-')
+        ax = fig.add_subplot(2, 1, 2)
+        for i in range(5):
+            ax.set_title("y-error")
+            ax.grid(color='gray', linestyle='--', axis='y')
+            ax.scatter(x, cp_y[i], c=colors[i], label=labels[i])
+            m, b = np.polyfit(x, cp_y[i], 1)
+            ax.plot(x, m * x + b, color=colors[i], linestyle='-')
+            ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
 
-        plt.subplot(2, 1, 2)
-        plt.scatter(x, cp0_y, c='b', label='Center')
-        m, b = np.polyfit(x, cp0_y, 1)
-        plt.plot(x, m * x + b, 'b-')
-        plt.scatter(x, cp1_y, c='r', label='Bottom left')
-        m, b = np.polyfit(x, cp1_y, 1)
-        plt.plot(x, m * x + b, 'r-')
-        plt.scatter(x, cp2_y, c='g', label='Top left')
-        m, b = np.polyfit(x, cp2_y, 1)
-        plt.plot(x, m * x + b, 'g-')
-        plt.scatter(x, cp3_y, c='y', label='Top right')
-        m, b = np.polyfit(x, cp3_y, 1)
-        plt.plot(x, m * x + b, 'y-')
-        plt.scatter(x, cp4_y, c='c', label='Bottom right')
-        m, b = np.polyfit(x, cp4_y, 1)
-        plt.plot(x, m * x + b, 'c-')
 
-        plt.legend(loc="upper left", bbox_to_anchor=(1,1))
-
-        plt.savefig(filepath)
-        plt.clf()
+        fig.savefig(filepath)
+        plt.close(fig)
 
     # Save summary in dictionary format
-    #error_summary[subject] = dict_data
+    error_summary[subject] = json_data_calib
 
 # Dump error summaries in JSON format
-#with open(os.path.join(export_root, "error_summary.json"), 'w') as file:
-    #json.dump(error_summary, file)
-    #file.close()
-
-
-
-
-
-
-
-#test = r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results\22-f-25\calibrations"
-
-#gaze_error = get_calibration_error(test, "003")
-
-
-"""
-for i in range(5):
-    plt.subplot(2, 3, i+1)
-    t = range(0, len(gaze_error[i][2]))
-    color = []
-    for ii in range(len(gaze_error[i][2])):
-        if ii in gaze_error[i][3]:
-            color.append('r')
-        else:
-            color.append('b')
-    #plt.scatter(range(0, len(gaze_error[i][0])), gaze_error[i][0])
-    #plt.scatter(range(0, len(gaze_error[i][1])), gaze_error[i][1])
-    plt.scatter(t, gaze_error[i][2], c = color)
-    #plt.scatter(range(0, len(gaze_error[i][0])), gaze_error[i][0])
-    #plt.scatter(range(0, len(gaze_error[i][1])), gaze_error[i][1])
-
-plt.show()
-"""
-
+with open(os.path.join(export_root, "error_summary.json"), 'w') as file:
+    print("Dumping data in JSON format")
+    json.dump(error_summary, file)
+    file.close()
 
