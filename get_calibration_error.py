@@ -51,6 +51,8 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
     # Expected calibration point locations
     # Note, in the eye capture software, y-axis is positive upwards
     # In openCV, it's positive downwards
+    # Old values
+    """
     cp_locations = [
         [0.5, 0.5], # Center
         [0.25, 0.25], # Down left
@@ -58,6 +60,17 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
         [0.75, 0.75], # Up right
         [0.75, 0.25] # Down right
     ]
+    """
+
+    cp_locations = [
+        [0.5, 0.5],  # Center
+        [114/384, 1/3],  # Down left
+        [114/384, 2/3],  # Up left
+        [270/384, 2/3],  # Up right
+        [270/384, 1/3]  # Down right
+    ]
+
+
 
     gaze_error = []
     current_point = 0
@@ -71,8 +84,12 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
         error_y = []
         error_comb = []
         for row in interval:
-            error_x_tmp = cp_locations[current_point][0] - row[1]
-            error_y_tmp = cp_locations[current_point][1] - row[2]
+            # Subtract the calibration point center from the measured value
+            # This way the error will be as follows:
+            # On x axis the error will be positive if the measured point is to the right of the CP center
+            # On y axis the error will be positive if the measured point is above the CP center
+            error_x_tmp = row[1] - cp_locations[current_point][0]
+            error_y_tmp = row[2] - cp_locations[current_point][1]
             error_sum_x += error_x_tmp
             error_sum_y += error_y_tmp
             error_x.append(error_x_tmp)
