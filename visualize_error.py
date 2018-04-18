@@ -2,6 +2,7 @@
 
 import os.path
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import json
 import pprint
 import numpy as np
@@ -29,11 +30,6 @@ error_summary = {}
 pp = pprint.PrettyPrinter(indent=2)
 
 # Calibration point lables
-labels = [ 'Center',
-           'Bottom left',
-           'Top left',
-           'Top right',
-           'Bottom right']
 
 for subject, calibs in folders.items():
     # Make export folder for subject
@@ -58,12 +54,26 @@ for subject, calibs in folders.items():
 
 
         if not os.path.isfile(filepath):
-            fig = plt.figure(figsize=(20, 10))
-
+            fig = plt.figure(figsize=(40, 20))
+            labels = [['Center x',
+                       'Bottom left x',
+                       'Top left x',
+                       'Top right x',
+                       'Bottom right x'],
+                      ['Center y',
+                       'Bottom left y',
+                       'Top left y',
+                       'Top right y',
+                       'Bottom right y']
+                      ]
             for i in range(5):
-                ax = fig.add_subplot(2, 3, i + 1)
-                ax.set_title(labels[i])
-                ax.grid(color='lightgray', linestyle='--')
+                #ax = fig.add_subplot(2, 5, i + 1)
+                ax_x = plt.subplot2grid((2, 5), (0, i))
+                ax_y = plt.subplot2grid((2, 5), (1, i))
+                ax_x.set_title(labels[0][i])
+                ax_y.set_title(labels[1][i])
+                ax_x.grid(color='lightgray', linestyle='--')
+                ax_y.grid(color='lightgray', linestyle='--')
 
                 t = range(0, len(gaze_error[i][2]))
                 color = []
@@ -74,7 +84,8 @@ for subject, calibs in folders.items():
                         color.append('b')
                 # plt.scatter(range(0, len(gaze_error[i][0])), gaze_error[i][0])
                 # plt.scatter(range(0, len(gaze_error[i][1])), gaze_error[i][1])
-                ax.scatter(t, gaze_error[i][2], c=color)
+                ax_x.scatter(t, gaze_error[i][0], c=color)
+                ax_y.scatter(t, gaze_error[i][1], c=color)
 
             fig.savefig(filepath)
             plt.close(fig)
@@ -100,8 +111,9 @@ for subject, calibs in folders.items():
                         error_sum_x += cp[0][i]
                         error_sum_y += cp[1][i]
 
-                error_avg_x = error_sum_x / (length-outliers)
-                error_avg_y = error_sum_y / (length-outliers)
+                if length > outliers:
+                    error_avg_x = error_sum_x / (length-outliers)
+                    error_avg_y = error_sum_y / (length-outliers)
             else:
                 print("Error, x and y dimension mismatch")
 
@@ -149,6 +161,12 @@ for subject, calibs in folders.items():
 
 
     if not os.path.isfile(filepath):
+        labels = ['Center',
+                  'Bottom left',
+                  'Top left',
+                  'Top right',
+                  'Bottom right']
+
         fig = plt.figure(figsize=(20, 20))
         # Plot structure:
         # Subplot 1 = x_error, 2 = y_error
