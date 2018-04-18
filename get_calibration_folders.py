@@ -22,12 +22,10 @@ def get_calibration_folders(root):
             # print(subject)
             # print(calib_dir)
 
-            calibrations = next(os.walk(calib_dir))[1]
-
-            # Debug
-            # print(calibrations)
-
-            output[subject] = calibrations
+            # Check if directory contains calibrations
+            if os.path.isdir(calib_dir):
+                calibrations = next(os.walk(calib_dir))[1]                        
+                output[subject] = calibrations
 
     return output
 
