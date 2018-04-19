@@ -147,7 +147,17 @@ for subject, calibs in folders.items():
             cp_y[i].append(value[1][i])
 
         # Copy results into json format for output
-        json_data_calib[key] = [cp_x, cp_y]
+        x_stdev = np.std(cp_x)
+        y_stdev = np.std(cp_y)
+
+        tmp = { "x_error": cp_x,
+                "y_error": cp_y,
+                "x_stdev": np.std(cp_x),
+                "y_stdev": np.std(cp_y),
+                "x_variance": np.var(cp_x),
+                "y_variance": np.var(cp_y)
+        }
+        json_data_calib[key] = tmp
 
 
     # Save plots. Skip this step if plot already exist
