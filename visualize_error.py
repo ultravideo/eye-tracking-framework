@@ -29,8 +29,6 @@ error_summary = {}
 
 pp = pprint.PrettyPrinter(indent=2)
 
-# Calibration point lables
-
 for subject, calibs in folders.items():
     # Make export folder for subject
     subject_dir = os.path.join(export_root, subject)
@@ -39,9 +37,12 @@ for subject, calibs in folders.items():
 
     calibrations_path = os.path.join(root, subject, "calibrations")
 
+    dict_data = {}
+    # Holds the data for this calibration in dictionary format
+    calibrations = {}
+
     # Iterate through last eight calibration videos
     # 1 - 3 first videos are the initial calibrations
-    dict_data = {}
     for calibration in calibs[-8:]:
         print("Processing " + subject + ": " + calibration)
         # Gaze error will be in format:
@@ -52,6 +53,12 @@ for subject, calibs in folders.items():
         filename = subject + "_" + calibration + ".png"
         filepath = os.path.join(subject_dir, filename)
 
+        # Calibration point labels
+        cp_names = [ "center",
+                     "bottom_left",
+                     "top_left",
+                     "top_right",
+                     "bottom_right" ]
 
         if not os.path.isfile(filepath):
             fig = plt.figure(figsize=(40, 20))
@@ -66,7 +73,12 @@ for subject, calibs in folders.items():
                        'Top right y',
                        'Bottom right y']
                       ]
+            # Separate the data for each point
+            points = {}
             for i in range(5):
+                tmp = {}
+                filtered_x = []
+                filtered_y = []
                 #ax = fig.add_subplot(2, 5, i + 1)
                 ax_x = plt.subplot2grid((2, 5), (0, i))
                 ax_y = plt.subplot2grid((2, 5), (1, i))
@@ -79,14 +91,26 @@ for subject, calibs in folders.items():
                 color = []
                 for ii in range(len(gaze_error[i][2])):
                     if ii in gaze_error[i][3]:
+                        # Outlier,
                         color.append('r')
                     else:
+                        filtered_x.append(gaze_error[i][0][ii])
+                        filtered_y.append(gaze_error[i][1][ii])
                         color.append('b')
+                tmp["x_error"] = filtered_x
+                tmp["x_stdev"] = np.std(filtered_x)
+                tmp["x_variance"] = np.var(filtered_x)
+                tmp["y_error"] = filtered_y
+                tmp["y_stdev"] = np.std(filtered_y)
+                tmp["y_variance"] = np.var(filtered_y)
                 # plt.scatter(range(0, len(gaze_error[i][0])), gaze_error[i][0])
                 # plt.scatter(range(0, len(gaze_error[i][1])), gaze_error[i][1])
                 ax_x.scatter(t, gaze_error[i][0], c=color)
                 ax_y.scatter(t, gaze_error[i][1], c=color)
 
+                points[cp_names[i]] = tmp
+
+            calibrations[calibration] = points
             fig.savefig(filepath)
             plt.close(fig)
 
@@ -122,6 +146,8 @@ for subject, calibs in folders.items():
 
         # Save results for this calibration video into dictionary
         dict_data[calibration] = [average_x_errors, average_y_errors]
+
+    error_summary[subject] = calibrations
 
 
         #plt.scatter(range(5), average_x_errors)
@@ -203,7 +229,7 @@ for subject, calibs in folders.items():
         plt.close(fig)
 
     # Save summary in dictionary format
-    error_summary[subject] = json_data_calib
+    #error_summary[subject] = json_data_calib
 
 # Dump error summaries in JSON format
 with open(os.path.join(export_root, "error_summary.json"), 'w') as file:
