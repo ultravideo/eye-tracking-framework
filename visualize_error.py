@@ -6,11 +6,12 @@ import matplotlib.gridspec as gridspec
 import json
 import pprint
 import numpy as np
+import sys
 
 from get_calibration_error import get_calibration_error
 from get_calibration_folders import get_calibration_folders
 
-def visualize_error(root, destgitination):
+def visualize_error(root, destination):
     """
     Draws plots for data and writes results in .json format.
     
@@ -240,8 +241,15 @@ def visualize_error(root, destgitination):
         #error_summary[subject] = json_data_calib
 
     # Dump error summaries in JSON format
-    with open(os.path.join(export_root, "error_summary.json"), 'w') as file:
-        print("Dumping data in JSON format")
+    with open(os.path.join(destination, "error_summary.json"), 'w') as file:
+        print("Dumping data in JSON format. Path: " + destination)
         json.dump(error_summary, file)
         file.close()
 
+
+if __name__ == "__main__":
+    # Check command line arguments
+    if len(sys.argv) < 3:
+        print("Need at least two arguments: data root folder and destination folder")
+    else:
+        visualize_error(sys.argv[1], sys.argv[2])
