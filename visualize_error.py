@@ -40,7 +40,7 @@ def visualize_error(root, destination):
 
     for subject, calibs in folders.items():
         # Make export folder for subject
-        subject_dir = os.path.join(export_root, subject)
+        subject_dir = os.path.join(export_root, destination, subject)
         if not os.path.exists(subject_dir):
             os.makedirs(subject_dir)
 
@@ -69,6 +69,7 @@ def visualize_error(root, destination):
                          "top_right",
                          "bottom_right" ]
 
+            # Skip if file already exist
             if not os.path.isfile(filepath):
                 fig = plt.figure(figsize=(40, 20))
                 labels = [['Center x',
