@@ -1,6 +1,8 @@
 import os.path
 import json
+from csv import reader
 from math import fabs
+import pprint
 
 from compress_gaze_points import compress_gaze_points
 from filter_gaps import filter_gaps
@@ -28,10 +30,26 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
     assert (len(os.listdir(csv_file_path)) == 1)  # Make sure there is exactly one export result
 
     # Load the gaze points from a .csv file and process
+    # Also load the provided fixation data
     csv_file_path = os.path.join(csv_file_path, os.listdir(csv_file_path)[0], "surfaces")
+    fixation_file_path = ""
     for filename in os.listdir(csv_file_path):
         if filename[0:5] == "gaze_":
             csv_file_path = os.path.join(csv_file_path, filename)
+        elif filename[0:10] == "fixations_":
+            fixation_file_path = os.path.join(csv_file_path, filename)
+
+    # Read fixations
+    fixations = []
+    # 0 id, 1 start_timestamp, 2 duration, 3 start_frame, 4 end_frame, 5 norm_pos_x, 6 norm_pos_y, 7 x_scaled, 8 y_scaled, 9 on_srf
+    # Indexes to be copied: start & end frames, x & y position
+    indexes = [3, 4, 5, 6]
+    with open(fixation_file_path) as fixation_csv:
+        datareader = reader(fixation_csv)
+        # Skip header
+        datareader.__next__()
+        for row in datareader:
+            fixations.append([row[i] for i in indexes])
 
     gaze_points_tmp = filter_gaps(csv_file_path, 10)
 
@@ -73,13 +91,40 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
 
 
     gaze_error = []
+    fixation_error = {}
     current_point = 0
     error_sum_x = 0
     error_sum_y = 0
 
+    print("\nTotal fixations: " + str(len(fixations)))
+    print(fixations)
     # Go through each point interval and calculate gaze error
     for point in points:
+        # Gather the gaze points between interval start and end frames
         interval = [ i for i in gaze_points if(i[0] >= point[0] and i[0] <= point[1])]
+
+        # Gather fixations inside current interval
+        fixation_count = 0
+        current_fixations = []
+        for fixation in fixations:
+            if int(fixation[0]) > point[0] and int(fixation[0]) < point[1]:
+                fixation_count += 1
+                tmp = fixation
+                # Convert from string
+                tmp[0] = int(tmp[0])
+                tmp[1] = int(tmp[1])
+                tmp[2] = float(tmp[2])
+                tmp[3] = float(tmp[3])
+                if tmp[1] > point[1]:
+                    tmp[1] = point[1]
+                # Calculate error
+                tmp[2] = tmp[2] - cp_locations[current_point][0]
+                tmp[3] = tmp[3] - cp_locations[current_point][1]
+                current_fixations.append(tmp)
+
+        print("Fixations in interval (" + str(point[0]) + "-" + str(point[1]) + "): " + str(fixation_count))
+        fixation_error[current_point] = current_fixations
+
         error_x = []
         error_y = []
         error_comb = []
@@ -103,8 +148,6 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
         # Group error values together by calibration point index
         gaze_error.append([error_x, error_y, error_comb, outlier_indices])
 
-
-
         print("Outliers detected: " + str(len(outlier_indices)))
         if len(outlier_indices) > 0:
             print(outlier_indices)
@@ -113,8 +156,14 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
         error_sum_y = 0
         current_point += 1
 
-    return gaze_error
+        # Calculate separate fixation error
+
+
+    return gaze_error, fixation_error
 
 if __name__ == "__main__":
-    print(get_calibration_error(
-        r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results\0-f-35\calibrations", "001"))
+    pp = pprint.PrettyPrinter(indent=2)
+    gaze_error, fixation_error = get_calibration_error(
+        r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results\23-f-25\calibrations", "001")
+    pp.pprint(gaze_error)
+    pp.pprint(fixation_error)
