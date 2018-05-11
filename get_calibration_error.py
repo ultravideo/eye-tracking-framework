@@ -115,6 +115,10 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
                 tmp[1] = int(tmp[1])
                 tmp[2] = float(tmp[2])
                 tmp[3] = float(tmp[3])
+                # We also need the point visibility start and end for later visualization
+                tmp.append(point[0])
+                tmp.append(point[1])
+
                 if tmp[1] > point[1]:
                     tmp[1] = point[1]
                 # Calculate error
