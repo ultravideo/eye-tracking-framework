@@ -137,14 +137,17 @@ def visualize_error(root, destination):
 
                     margin = 10
                     # Set axis limits
-                    if abs(min(tmp['x_error_pxl'])) > abs(max(tmp['x_error_pxl'])):
-                        x_lim = abs(min(tmp['x_error_pxl'])) + margin
-                    else:
-                        x_lim = abs(max(tmp['x_error_pxl'])) + margin
-                    if abs(min(tmp['y_error_pxl'])) > abs(max(tmp['y_error_pxl'])):
-                        y_lim = abs(min(tmp['y_error_pxl'])) + margin
-                    else:
-                        y_lim = abs(max(tmp['y_error_pxl'])) + margin
+                    x_lim = 0
+                    if len(tmp['x_error_pxl']) > 0:
+                        if abs(min(tmp['x_error_pxl'])) > abs(max(tmp['x_error_pxl'])):
+                            x_lim = abs(min(tmp['x_error_pxl'])) + margin
+                        else:
+                            x_lim = abs(max(tmp['x_error_pxl'])) + margin
+                    if len(tmp['y_error_pxl']) > 0:
+                        if abs(min(tmp['y_error_pxl'])) > abs(max(tmp['y_error_pxl'])):
+                            y_lim = abs(min(tmp['y_error_pxl'])) + margin
+                        else:
+                            y_lim = abs(max(tmp['y_error_pxl'])) + margin
 
                     ax_xy.set_xlim(-x_lim, x_lim)
                     ax_xy.set_ylim(-y_lim, y_lim)
