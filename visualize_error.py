@@ -2,17 +2,16 @@
 
 import os.path
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 import json
-import pprint
 import numpy as np
 import sys
 
 from get_calibration_error import get_calibration_error
 from get_calibration_folders import get_calibration_folders
 
-X_WIDTH = 1920
-Y_HEIGHT = 1080
+X_WIDTH = 3840
+Y_HEIGHT = 2160
+
 
 def visualize_error(root, destination):
     """
@@ -22,13 +21,12 @@ def visualize_error(root, destination):
     Destination is the folder name where the exported .json is put.
     It is found under the exports folder, which is in the parent folder of root
     """
-    #root = r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results"
-    export_root = os.path.abspath( os.path.join(root, "..", "exports") )
+
+    export_root = os.path.abspath(os.path.join(root, "..", "exports"))
 
     # Create exports directory if it doesn't exist
     if not os.path.exists(export_root):
         os.makedirs(export_root)
-
 
     # Iterate through all subjects and calibration videos
     # Save all error figures with outliers marked
@@ -38,8 +36,6 @@ def visualize_error(root, destination):
 
     # Errors in dictionary format
     error_summary = {}
-
-    pp = pprint.PrettyPrinter(indent=2)
 
     for subject, calibs in folders.items():
         # Make export folder for subject
@@ -66,11 +62,11 @@ def visualize_error(root, destination):
             filepath = os.path.join(subject_dir, filename)
 
             # Calibration point labels
-            cp_names = [ "center",
-                         "bottom_left",
-                         "top_left",
-                         "top_right",
-                         "bottom_right" ]
+            cp_names = ["center",
+                        "bottom_left",
+                        "top_left",
+                        "top_right",
+                        "bottom_right"]
 
             # Skip if file already exist
             if not os.path.isfile(filepath):
@@ -95,7 +91,7 @@ def visualize_error(root, destination):
                     # Values as pixels
                     pxl_x = []
                     pxl_y = []
-                    #ax = fig.add_subplot(2, 5, i + 1)
+
                     ax_x = plt.subplot2grid((3, 5), (0, i))
                     ax_y = plt.subplot2grid((3, 5), (1, i))
                     ax_xy = plt.subplot2grid((3, 5), (2, i))
@@ -115,7 +111,7 @@ def visualize_error(root, destination):
                             color.append('r')
                         else:
                             filtered_x.append(gaze_error[i][0][ii])
-                            pxl_x.append(gaze_error[i][0][ii]*X_WIDTH)
+                            pxl_x.append(gaze_error[i][0][ii] * X_WIDTH)
                             filtered_y.append(gaze_error[i][1][ii])
                             pxl_y.append(gaze_error[i][1][ii] * Y_HEIGHT)
                             color.append('b')
@@ -135,20 +131,20 @@ def visualize_error(root, destination):
                     pxl_y_tmp = []
 
                     for val in gaze_error[i][0]:
-                        pxl_x_tmp.append(val*X_WIDTH)
+                        pxl_x_tmp.append(val * X_WIDTH)
                     for val in gaze_error[i][1]:
                         pxl_y_tmp.append(val * Y_HEIGHT)
 
                     margin = 10
                     # Set axis limits
                     if abs(min(tmp['x_error_pxl'])) > abs(max(tmp['x_error_pxl'])):
-                        x_lim = abs(min(tmp['x_error_pxl']))+margin
+                        x_lim = abs(min(tmp['x_error_pxl'])) + margin
                     else:
-                        x_lim = abs(max(tmp['x_error_pxl']))+margin
+                        x_lim = abs(max(tmp['x_error_pxl'])) + margin
                     if abs(min(tmp['y_error_pxl'])) > abs(max(tmp['y_error_pxl'])):
-                        y_lim = abs(min(tmp['y_error_pxl']))+margin
+                        y_lim = abs(min(tmp['y_error_pxl'])) + margin
                     else:
-                        y_lim = abs(max(tmp['y_error_pxl']))+margin
+                        y_lim = abs(max(tmp['y_error_pxl'])) + margin
 
                     ax_xy.set_xlim(-x_lim, x_lim)
                     ax_xy.set_ylim(-y_lim, y_lim)
@@ -156,8 +152,7 @@ def visualize_error(root, destination):
                     ax_xy.spines['right'].set_color(None)
                     ax_xy.spines['bottom'].set_position('center')
                     ax_xy.spines['top'].set_color(None)
-                    #ax_x.scatter(t, gaze_error[i][0], c=color)
-                    #ax_y.scatter(t, gaze_error[i][1], c=color)
+
                     ax_x.scatter(t, pxl_x_tmp, c=color, marker='.')
                     ax_y.scatter(t, pxl_y_tmp, c=color, marker='.')
                     ax_xy.scatter(tmp['x_error_pxl'], tmp['y_error_pxl'], marker='.')
@@ -173,8 +168,8 @@ def visualize_error(root, destination):
                             #           4 = calibration point start frame
                             #           5 = calibration point end frame
                             fixation_t = [row[0] - row[4], row[1] - row[4]]
-                            fixation_x = [row[2]*X_WIDTH, row[2]*X_WIDTH]
-                            fixation_y = [row[3]*Y_HEIGHT, row[3]*Y_HEIGHT]
+                            fixation_x = [row[2] * X_WIDTH, row[2] * X_WIDTH]
+                            fixation_y = [row[3] * Y_HEIGHT, row[3] * Y_HEIGHT]
 
                             ax_x.plot(fixation_t, fixation_x, '-k')
                             ax_y.plot(fixation_t, fixation_y, '-k')
@@ -188,7 +183,6 @@ def visualize_error(root, destination):
             # Calculate the x and y average error for each calibration point
             # Ignore outliers
 
-            #point = 0
             average_x_errors = []
             average_y_errors = []
             for cp in gaze_error:
@@ -199,16 +193,16 @@ def visualize_error(root, destination):
                 length = len(cp[0])
                 outliers = len(cp[3])
                 # Check if x and y length is the same
-                if ( length == len(cp[1])):
+                if length == len(cp[1]):
                     for i in range(length):
                         # Skip if index is marked as outlier
-                        if not i in cp[3]:
+                        if i not in cp[3]:
                             error_sum_x += cp[0][i]
                             error_sum_y += cp[1][i]
 
                     if length > outliers:
-                        error_avg_x = error_sum_x / (length-outliers)
-                        error_avg_y = error_sum_y / (length-outliers)
+                        error_avg_x = error_sum_x / (length - outliers)
+                        error_avg_y = error_sum_y / (length - outliers)
                 else:
                     print("Error, x and y dimension mismatch")
 
@@ -219,13 +213,6 @@ def visualize_error(root, destination):
             dict_data[calibration] = [average_x_errors, average_y_errors]
 
         error_summary[subject] = calibrations
-
-
-            #plt.scatter(range(5), average_x_errors)
-            #plt.scatter(range(5), average_y_errors)
-            #plt.show()
-
-        #pp.pprint(dict_data)
 
         #                                               0       1           2           3           4
         # Group error data by calibration point index (center, bottom left, top left, top right, bottom right)
@@ -244,24 +231,23 @@ def visualize_error(root, destination):
                 cp_y[i].append(value[1][i])
 
             # Copy results into json format for output
-            tmp = { "x_error": cp_x,
-                    "y_error": cp_y,
-                    "x_stdev": np.std(cp_x),
-                    "y_stdev": np.std(cp_y),
-                    "x_variance": np.var(cp_x),
-                    "y_variance": np.var(cp_y)
-            }
+            tmp = {"x_error": cp_x,
+                   "y_error": cp_y,
+                   "x_stdev": np.std(cp_x),
+                   "y_stdev": np.std(cp_y),
+                   "x_variance": np.var(cp_x),
+                   "y_variance": np.var(cp_y)
+                   }
             json_data_calib[key] = tmp
-
 
         # Save plots. Skip this step if plot already exist
         filename = subject + "_error_summary.png"
         filepath = os.path.join(subject_dir, filename)
-        #print(filepath)
+        # print(filepath)
         x = range(8)
 
         colors = ['k', 'red', 'orange', 'c', 'blue']
-        #lines = ['k-', 'darkred-', 'salmon-', 'royalblue-', 'darkblue-']
+        # lines = ['k-', 'darkred-', 'salmon-', 'royalblue-', 'darkblue-']
 
         labels = ['Center',
                   'Bottom left',
@@ -273,17 +259,17 @@ def visualize_error(root, destination):
             fig = plt.figure(figsize=(20, 20))
             # Plot structure:
             # Subplot 1 = x_error, 2 = y_error, 3 = errors in x, y
-            #ax = fig.add_subplot(2, 1, 1)
+            # ax = fig.add_subplot(2, 1, 1)
             ax = plt.subplot2grid((2, 1), (0, 0))
             for i in range(5):
                 ax.set_title("x-error")
                 ax.grid(color='gray', linestyle='--', axis='y')
                 ax.scatter(x, cp_x[i], c=colors[i], label=labels[i])
                 m, b = np.polyfit(x, cp_x[i], 1)
-                ax.plot(x, m*x+b, color=colors[i], linestyle='-')
-                ax.legend(loc="upper left", bbox_to_anchor=(1,1))
+                ax.plot(x, m * x + b, color=colors[i], linestyle='-')
+                ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
 
-            #ax = fig.add_subplot(2, 1, 2)
+            # ax = fig.add_subplot(2, 1, 2)
             ax = plt.subplot2grid((2, 1), (1, 0))
             for i in range(5):
                 ax.set_title("y-error")
@@ -302,8 +288,7 @@ def visualize_error(root, destination):
         filepath = os.path.join(subject_dir, filename)
 
         if not os.path.isfile(filepath):
-            fig = plt.figure(figsize=(20,20))
-            margin = 10
+            fig = plt.figure(figsize=(20, 20))
             ax = plt.subplot2grid((1, 1), (0, 0))
             ax.spines['left'].set_position('zero')
             ax.spines['right'].set_color(None)
@@ -316,19 +301,17 @@ def visualize_error(root, destination):
                 cp_x_pxl = []
                 cp_y_pxl = []
                 for ii in range(len(cp_x[i])):
-                    cp_x_pxl.append(cp_x[i][ii]*X_WIDTH)
-                    cp_y_pxl.append(cp_y[i][ii]*Y_HEIGHT)
+                    cp_x_pxl.append(cp_x[i][ii] * X_WIDTH)
+                    cp_y_pxl.append(cp_y[i][ii] * Y_HEIGHT)
 
-                ax.scatter(cp_x_pxl, cp_y_pxl, c=colors[i], label=labels[i])
+                ax.plot(cp_x_pxl, cp_y_pxl, c=colors[i], linestyle='--', marker='o', label=labels[i])
                 ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
 
             fig.savefig(filepath)
             plt.close(fig)
 
-
-
-        # Save summary in dictionary format
-        #error_summary[subject] = json_data_calib
+    # Save summary in dictionary format
+    # error_summary[subject] = json_data_calib
 
     # Dump error summaries in JSON format
     with open(os.path.join(destination, "error_summary.json"), 'w') as file:
