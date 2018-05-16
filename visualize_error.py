@@ -230,8 +230,10 @@ def visualize_error(root, destination):
 
         for key, value in dict_data.items():
             for i in range(5):
-                cp_x[i].append(value[0][i])
-                cp_y[i].append(value[1][i])
+                # Convert to pixel values while copying
+                cp_x[i].append(value[0][i]*X_WIDTH)
+                cp_y[i].append(value[1][i]*Y_HEIGHT)
+
 
             # Copy results into json format for output
             tmp = {"x_error": cp_x,
@@ -264,23 +266,23 @@ def visualize_error(root, destination):
             # Subplot 1 = x_error, 2 = y_error, 3 = errors in x, y
             # ax = fig.add_subplot(2, 1, 1)
             ax = plt.subplot2grid((2, 1), (0, 0))
+            ax.set_title("x-error")
+            ax.grid(color='gray', linestyle='--', axis='y')
+            ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
             for i in range(5):
-                ax.set_title("x-error")
-                ax.grid(color='gray', linestyle='--', axis='y')
                 ax.scatter(x, cp_x[i], c=colors[i], label=labels[i])
                 m, b = np.polyfit(x, cp_x[i], 1)
                 ax.plot(x, m * x + b, color=colors[i], linestyle='-')
-                ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
 
             # ax = fig.add_subplot(2, 1, 2)
             ax = plt.subplot2grid((2, 1), (1, 0))
+            ax.set_title("y-error")
+            ax.grid(color='gray', linestyle='--', axis='y')
+            ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
             for i in range(5):
-                ax.set_title("y-error")
-                ax.grid(color='gray', linestyle='--', axis='y')
                 ax.scatter(x, cp_y[i], c=colors[i], label=labels[i])
                 m, b = np.polyfit(x, cp_y[i], 1)
                 ax.plot(x, m * x + b, color=colors[i], linestyle='-')
-                ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
 
             fig.savefig(filepath)
             plt.close(fig)
@@ -298,17 +300,11 @@ def visualize_error(root, destination):
             ax.spines['bottom'].set_position('zero')
             ax.spines['top'].set_color(None)
             ax.grid(color='lightgray', linestyle='--')
+            ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
 
             for i in range(5):
-                # Gather points and convert to pixel values
-                cp_x_pxl = []
-                cp_y_pxl = []
-                for ii in range(len(cp_x[i])):
-                    cp_x_pxl.append(cp_x[i][ii] * X_WIDTH)
-                    cp_y_pxl.append(cp_y[i][ii] * Y_HEIGHT)
+                ax.plot(cp_x[i], cp_y[i], c=colors[i], linestyle='--', marker='o', label=labels[i])
 
-                ax.plot(cp_x_pxl, cp_y_pxl, c=colors[i], linestyle='--', marker='o', label=labels[i])
-                ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
 
             fig.savefig(filepath)
             plt.close(fig)
