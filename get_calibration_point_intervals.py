@@ -4,7 +4,7 @@ import os
 from csv import reader
 
 
-def get_calibration_point_intervals(location, recording="000", staring_frame=10):
+def get_calibration_point_intervals(location, recording="000", starting_frame=10):
     """
     Returns calibration point intervals as a list for the given calibration
     video.
@@ -111,7 +111,7 @@ def get_calibration_point_intervals(location, recording="000", staring_frame=10)
         # cv2.imshow("Test", warp[int(cp_centers[current_point][1]-cp_radius):int(cp_centers[current_point][1]+cp_radius), \
         #                   int(cp_centers[current_point][0]-cp_radius):int(cp_centers[current_point][0]+cp_radius)])
 
-        if frame > staring_frame:
+        if frame > starting_frame:
             if minimum < cp_visibility_threshold and not started:
                 # Debug
                 #print("Point fade in detected")
