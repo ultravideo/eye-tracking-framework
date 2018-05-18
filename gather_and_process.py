@@ -25,6 +25,10 @@ def gather_and_process(root, destination):
 
     # Gather gaze points, process and save results.
     results = {}
+    datafolder = os.path.join(export_root, destination)
+    if not os.path.isdir(datafolder):
+        os.makedirs(datafolder)
+        
     datafile = os.path.join(export_root, destination, "processed_gaze_points.json")
     if not os.path.isfile(datafile):
         # File does not exist. Gather all data
@@ -32,6 +36,7 @@ def gather_and_process(root, destination):
             calibrations_path = os.path.join(root, subject, "calibrations")
 
             calib_dict = {}
+            # Iterate through last eight entries. First 1-3 folders can be initial calibrations
             for calibration in calibs[-8:]:
                 tmp = {}
                 # Gaze error will be in format:
@@ -49,6 +54,7 @@ def gather_and_process(root, destination):
         # Dump data
         with open(datafile, 'w') as file:
             json.dump(results, file)
+            file.close()
 
 if __name__ == "__main__":
     # Check command line arguments
