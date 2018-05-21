@@ -28,7 +28,7 @@ def gather_and_process(root, destination):
     datafolder = os.path.join(export_root, destination)
     if not os.path.isdir(datafolder):
         os.makedirs(datafolder)
-        
+
     datafile = os.path.join(export_root, destination, "processed_gaze_points.json")
     if not os.path.isfile(datafile):
         # File does not exist. Gather all data

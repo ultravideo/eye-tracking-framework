@@ -88,9 +88,14 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
         [270/384, 1/3]  # Down right
     ]
 
+    # Calibration point names
+    cp_names = ["center",
+                "bottom_left",
+                "top_left",
+                "top_right",
+                "bottom_right"]
 
-
-    gaze_error = []
+    gaze_error = {}
     fixation_error = {}
     current_point = 0
     error_sum_x = 0
@@ -127,7 +132,7 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
                 current_fixations.append(tmp)
 
         print("Fixations in interval (" + str(point[0]) + "-" + str(point[1]) + "): " + str(fixation_count))
-        fixation_error[current_point] = current_fixations
+        fixation_error[cp_names[current_point]] = current_fixations
 
         error_x = []
         error_y = []
@@ -150,7 +155,7 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
         # Check points for outliers using k-NN
         outlier_indices = detect_outliers(error_comb)
         # Group error values together by calibration point index
-        gaze_error.append([error_x, error_y, error_comb, outlier_indices])
+        gaze_error[cp_names[current_point]] = [error_x, error_y, error_comb, outlier_indices]
 
         print("Outliers detected: " + str(len(outlier_indices)))
         if len(outlier_indices) > 0:

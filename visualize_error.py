@@ -1,5 +1,3 @@
-# Visualize gaze point error compared to calibration point
-
 import os.path
 import matplotlib.pyplot as plt
 import json
@@ -8,17 +6,18 @@ import sys
 
 from get_calibration_error import get_calibration_error
 from get_calibration_folders import get_calibration_folders
+from gather_and_process import gather_and_process
 
 X_WIDTH = 3840
 Y_HEIGHT = 2160
 
 
 def visualize_error(root, destination):
-    """
+    """    
     Draws plots for data and writes results in .json format.
     
     Root is the root folder which contains experiment results     
-    Destination is the folder name where the exported .json is put.
+    Destination is the folder name where the exported subject folders with the plots are put
     It is found under the exports folder, which is in the parent folder of root
     """
 
@@ -28,34 +27,37 @@ def visualize_error(root, destination):
     if not os.path.exists(export_root):
         os.makedirs(export_root)
 
+    # Load data
+    datafile = os.path.join(export_root, destination, "processed_gaze_points.json")
+
+    if not os.path.isfile(datafile):
+        print("Processed data not found. Gather and process")
+        gather_and_process(root, destination)
+
+    with open(datafile) as file:
+        data = json.load(file)
+
     # Iterate through all subjects and calibration videos
     # Save all error figures with outliers marked
     # Save all average errors for each calibration video
 
-    folders = get_calibration_folders(root)
-
-    # Errors in dictionary format
-    error_summary = {}
-
-    for subject, calibs in folders.items():
+    for subject, calibs in data.items():
         # Make export folder for subject
         subject_dir = os.path.join(export_root, destination, subject)
         if not os.path.exists(subject_dir):
             os.makedirs(subject_dir)
 
-        calibrations_path = os.path.join(root, subject, "calibrations")
-
-        dict_data = {}
-        # Holds the data for this calibration in dictionary format
-        calibrations = {}
-
         # Iterate through last eight calibration videos
         # 1 - 3 first videos are the initial calibrations
-        for calibration in calibs[-8:]:
+        average_data = {}
+        for calibration in calibs:
             print("Processing " + subject + ": " + calibration)
             # Gaze error will be in format:
             # [calibration_point] [ error_x[], error_y[], error_combined[], outlier_indices[] ]
-            gaze_error, fixation_error = get_calibration_error(calibrations_path, calibration)
+            gaze_error = data[subject][calibration]['gaze_error']
+            # Fixation error will be in format:
+            # { calibration_point: [ start frame, end frame, error x, error y, cp start frame, cp end frame ] }
+            fixation_error = data[subject][calibration]['fixation_error']
 
             # Draw and save plots. Skip this step if plots exist
             filename = subject + "_" + calibration + ".png"
@@ -103,17 +105,17 @@ def visualize_error(root, destination):
                     ax_y.grid(color='lightgray', linestyle='--')
                     ax_xy.grid(color='lightgray', linestyle='--')
 
-                    t = range(0, len(gaze_error[i][2]))
+                    t = range(0, len(gaze_error[cp_names[i]][2]))
                     color = []
-                    for ii in range(len(gaze_error[i][2])):
-                        if ii in gaze_error[i][3]:
+                    for ii in range(len(gaze_error[cp_names[i]][2])):
+                        if ii in gaze_error[cp_names[i]][3]:
                             # Outlier
                             color.append('r')
                         else:
-                            filtered_x.append(gaze_error[i][0][ii])
-                            pxl_x.append(gaze_error[i][0][ii] * X_WIDTH)
-                            filtered_y.append(gaze_error[i][1][ii])
-                            pxl_y.append(gaze_error[i][1][ii] * Y_HEIGHT)
+                            filtered_x.append(gaze_error[cp_names[i]][0][ii])
+                            pxl_x.append(gaze_error[cp_names[i]][0][ii] * X_WIDTH)
+                            filtered_y.append(gaze_error[cp_names[i]][1][ii])
+                            pxl_y.append(gaze_error[cp_names[i]][1][ii] * Y_HEIGHT)
                             color.append('b')
                     tmp["x_error"] = filtered_x
                     tmp["x_error_pxl"] = pxl_x
@@ -130,9 +132,9 @@ def visualize_error(root, destination):
                     pxl_x_tmp = []
                     pxl_y_tmp = []
 
-                    for val in gaze_error[i][0]:
+                    for val in gaze_error[cp_names[i]][0]:
                         pxl_x_tmp.append(val * X_WIDTH)
-                    for val in gaze_error[i][1]:
+                    for val in gaze_error[cp_names[i]][1]:
                         pxl_y_tmp.append(val * Y_HEIGHT)
 
                     margin = 10
@@ -161,8 +163,8 @@ def visualize_error(root, destination):
                     ax_xy.scatter(tmp['x_error_pxl'], tmp['y_error_pxl'], marker='.')
 
                     # Draw fixations if exists
-                    if len(fixation_error[i]) > 0:
-                        for row in fixation_error[i]:
+                    if len(fixation_error[cp_names[i]]) > 0:
+                        for row in fixation_error[cp_names[i]]:
                             # Correct fixation start and end frames
                             # indexes:  0 = fixation start frame
                             #           1 = fixation end frame
@@ -179,7 +181,6 @@ def visualize_error(root, destination):
 
                     points[cp_names[i]] = tmp
 
-                calibrations[calibration] = points
                 fig.savefig(filepath)
                 plt.close(fig)
 
@@ -188,20 +189,20 @@ def visualize_error(root, destination):
 
             average_x_errors = []
             average_y_errors = []
-            for cp in gaze_error:
+            for cp, values in gaze_error.items():
                 error_avg_x = 0
                 error_avg_y = 0
                 error_sum_x = 0
                 error_sum_y = 0
-                length = len(cp[0])
-                outliers = len(cp[3])
+                length = len(values[0])
+                outliers = len(values[3])
                 # Check if x and y length is the same
-                if length == len(cp[1]):
+                if length == len(values[1]):
                     for i in range(length):
                         # Skip if index is marked as outlier
-                        if i not in cp[3]:
-                            error_sum_x += cp[0][i]
-                            error_sum_y += cp[1][i]
+                        if i not in values[3]:
+                            error_sum_x += values[0][i]
+                            error_sum_y += values[1][i]
 
                     if length > outliers:
                         error_avg_x = error_sum_x / (length - outliers)
@@ -213,9 +214,7 @@ def visualize_error(root, destination):
                 average_y_errors.append(error_avg_y)
 
             # Save results for this calibration video into dictionary
-            dict_data[calibration] = [average_x_errors, average_y_errors]
-
-        error_summary[subject] = calibrations
+            average_data[calibration] = [average_x_errors, average_y_errors]
 
         #                                               0       1           2           3           4
         # Group error data by calibration point index (center, bottom left, top left, top right, bottom right)
@@ -223,17 +222,16 @@ def visualize_error(root, destination):
         cp_y = []
         json_data_calib = {}
         # Initialize empty lists, one list for each calibration point
-        # Ex. the center calibration point errors are all stored in the same list
+        # Ex. the center calibration point errors are all stored in the same list index
         for i in range(5):
             cp_x.append([])
             cp_y.append([])
 
-        for key, value in dict_data.items():
+        for key, value in average_data.items():
             for i in range(5):
                 # Convert to pixel values while copying
                 cp_x[i].append(value[0][i]*X_WIDTH)
                 cp_y[i].append(value[1][i]*Y_HEIGHT)
-
 
             # Copy results into json format for output
             tmp = {"x_error": cp_x,
@@ -268,21 +266,21 @@ def visualize_error(root, destination):
             ax = plt.subplot2grid((2, 1), (0, 0))
             ax.set_title("x-error")
             ax.grid(color='gray', linestyle='--', axis='y')
-            ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
             for i in range(5):
                 ax.scatter(x, cp_x[i], c=colors[i], label=labels[i])
                 m, b = np.polyfit(x, cp_x[i], 1)
                 ax.plot(x, m * x + b, color=colors[i], linestyle='-')
+            ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
 
             # ax = fig.add_subplot(2, 1, 2)
             ax = plt.subplot2grid((2, 1), (1, 0))
             ax.set_title("y-error")
             ax.grid(color='gray', linestyle='--', axis='y')
-            ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
             for i in range(5):
                 ax.scatter(x, cp_y[i], c=colors[i], label=labels[i])
                 m, b = np.polyfit(x, cp_y[i], 1)
                 ax.plot(x, m * x + b, color=colors[i], linestyle='-')
+            ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
 
             fig.savefig(filepath)
             plt.close(fig)
@@ -300,23 +298,13 @@ def visualize_error(root, destination):
             ax.spines['bottom'].set_position('zero')
             ax.spines['top'].set_color(None)
             ax.grid(color='lightgray', linestyle='--')
-            ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
 
             for i in range(5):
                 ax.plot(cp_x[i], cp_y[i], c=colors[i], linestyle='--', marker='o', label=labels[i])
-
+            ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
 
             fig.savefig(filepath)
             plt.close(fig)
-
-    # Save summary in dictionary format
-    # error_summary[subject] = json_data_calib
-
-    # Dump error summaries in JSON format
-    with open(os.path.join(destination, "error_summary.json"), 'w') as file:
-        print("Dumping data in JSON format. Path: " + destination)
-        json.dump(error_summary, file)
-        file.close()
 
 
 if __name__ == "__main__":
