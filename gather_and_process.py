@@ -7,12 +7,13 @@ from get_calibration_folders import get_calibration_folders
 from get_calibration_error import get_calibration_error
 
 
-def gather_and_process(root, destination):
+def gather_and_process(root, destination, width=3840, height=2160):
     """
         Gathers and processes the gaze data.        
 
         Root is the root folder which contains experiment results     
-        Destination is the folder name where the exported .json is put.
+        Destination is the folder name where the exported .json is put
+        Width and height are the pixel dimensions of the test monitor
         It is found under the exports folder, which is in the parent folder of root
         """
 
@@ -58,6 +59,7 @@ def gather_and_process(root, destination):
                 # Calculate averages for raw gaze points and fixations
                 average_x_errors = []
                 average_y_errors = []
+                gaze_tmp = {}
                 for cp, values in gaze_error.items():
                     error_avg_x = 0
                     error_avg_y = 0
@@ -79,12 +81,11 @@ def gather_and_process(root, destination):
                     else:
                         print("Error, x and y dimension mismatch")
 
-                    average_x_errors.append(error_avg_x)
-                    average_y_errors.append(error_avg_y)
-                avg_tmp['gaze_error'] = [average_x_errors, average_y_errors]
+                    gaze_tmp[cp] = [error_avg_x, error_avg_y, error_avg_x*width, error_avg_y*height]
 
-                average_x_errors = []
-                average_y_errors = []
+                avg_tmp['gaze_error'] = gaze_tmp
+
+                fixation_tmp = {}
                 for cp, values in fixation_error.items():
                     total_length = 0
                     weights = []
@@ -99,12 +100,12 @@ def gather_and_process(root, destination):
                             y_coords.append(fixation[3])
                             weights.append((fixation[1] - fixation[0]) / total_length)
 
-                        average_x_errors.append(np.average(x_coords, weights=weights))
-                        average_y_errors.append(np.average(y_coords, weights=weights))
+                        avg_x = np.average(x_coords, weights=weights)
+                        avg_y = np.average(y_coords, weights=weights)
+                        fixation_tmp[cp] = [avg_x, avg_y, avg_x*width, avg_y*height]
                     else:
-                        average_x_errors.append([])
-                        average_y_errors.append([])
-                avg_tmp['fixation_error'] = [average_x_errors, average_y_errors]
+                        fixation_tmp[cp] = []
+                avg_tmp['fixation_error'] = fixation_tmp
 
                 average_dict[calibration] = avg_tmp
 
