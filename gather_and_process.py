@@ -57,8 +57,6 @@ def gather_and_process(root, destination, width=3840, height=2160):
                 calib_dict[calibration] = tmp
 
                 # Calculate averages for raw gaze points and fixations
-                average_x_errors = []
-                average_y_errors = []
                 gaze_tmp = {}
                 for cp, values in gaze_error.items():
                     error_avg_x = 0
