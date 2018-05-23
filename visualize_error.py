@@ -29,13 +29,19 @@ def visualize_error(root, destination):
 
     # Load data
     datafile = os.path.join(export_root, destination, "processed_gaze_points.json")
+    average_file = os.path.join(export_root, destination, "processed_averages.json")
 
-    if not os.path.isfile(datafile):
+    if not os.path.isfile(datafile) or not os.path.isfile(average_file):
         print("Processed data not found. Gather and process")
         gather_and_process(root, destination)
 
     with open(datafile) as file:
         data = json.load(file)
+        file.close()
+
+    with open(average_file) as file:
+        avg_data = json.load(file)
+        file.close()
 
     # Iterate through all subjects and calibration videos
     # Save all error figures with outliers marked
@@ -47,13 +53,10 @@ def visualize_error(root, destination):
         if not os.path.exists(subject_dir):
             os.makedirs(subject_dir)
 
-        # Iterate through last eight calibration videos
-        # 1 - 3 first videos are the initial calibrations
-        average_data = {}
         for calibration in calibs:
             print("Processing " + subject + ": " + calibration)
             # Gaze error will be in format:
-            # [calibration_point] [ error_x[], error_y[], error_combined[], outlier_indices[] ]
+            # { calibration_point: [ error_x[], error_y[], error_combined[], outlier_indices[] }
             gaze_error = data[subject][calibration]['gaze_error']
             # Fixation error will be in format:
             # { calibration_point: [ start frame, end frame, error x, error y, cp start frame, cp end frame ] }
@@ -184,55 +187,31 @@ def visualize_error(root, destination):
                 fig.savefig(filepath)
                 plt.close(fig)
 
-            # Calculate the x and y average error for each calibration point
-            # Ignore outliers
-
-            average_x_errors = []
-            average_y_errors = []
-            for cp, values in gaze_error.items():
-                error_avg_x = 0
-                error_avg_y = 0
-                error_sum_x = 0
-                error_sum_y = 0
-                length = len(values[0])
-                outliers = len(values[3])
-                # Check if x and y length is the same
-                if length == len(values[1]):
-                    for i in range(length):
-                        # Skip if index is marked as outlier
-                        if i not in values[3]:
-                            error_sum_x += values[0][i]
-                            error_sum_y += values[1][i]
-
-                    if length > outliers:
-                        error_avg_x = error_sum_x / (length - outliers)
-                        error_avg_y = error_sum_y / (length - outliers)
-                else:
-                    print("Error, x and y dimension mismatch")
-
-                average_x_errors.append(error_avg_x)
-                average_y_errors.append(error_avg_y)
-
-            # Save results for this calibration video into dictionary
-            average_data[calibration] = [average_x_errors, average_y_errors]
-
         #                                               0       1           2           3           4
         # Group error data by calibration point index (center, bottom left, top left, top right, bottom right)
         cp_x = []
         cp_y = []
+        fixation_cp_x = []
+        fixation_cp_y = []
         json_data_calib = {}
-        # Initialize empty lists, one list for each calibration point
+        # Initialize empty lists for re-arranging average values
         # Ex. the center calibration point errors are all stored in the same list index
         for i in range(5):
             cp_x.append([])
             cp_y.append([])
+            fixation_cp_x.append([])
+            fixation_cp_y.append([])
 
-        for key, value in average_data.items():
+        for calibration, values in avg_data[subject].items():
             for i in range(5):
-                # Convert to pixel values while copying
-                cp_x[i].append(value[0][i]*X_WIDTH)
-                cp_y[i].append(value[1][i]*Y_HEIGHT)
-
+                cp_x[i].append(values['gaze_error'][cp_names[i]][2])
+                cp_y[i].append(values['gaze_error'][cp_names[i]][3])
+                if values['fixation_error'][cp_names[i]]:
+                    fixation_cp_x[i].append(values['fixation_error'][cp_names[i]][2])
+                    fixation_cp_y[i].append(values['fixation_error'][cp_names[i]][3])
+                else:
+                    fixation_cp_x[i].append(float('nan'))
+                    fixation_cp_y[i].append(float('nan'))
             # Copy results into json format for output
             tmp = {"x_error": cp_x,
                    "y_error": cp_y,
@@ -241,13 +220,13 @@ def visualize_error(root, destination):
                    "x_variance": np.var(cp_x),
                    "y_variance": np.var(cp_y)
                    }
-            json_data_calib[key] = tmp
+            json_data_calib[calibration] = tmp
 
         # Save plots. Skip this step if plot already exist
         filename = subject + "_error_summary.png"
         filepath = os.path.join(subject_dir, filename)
         # print(filepath)
-        x = range(8)
+        x = np.array(range(8))
 
         colors = ['k', 'red', 'orange', 'c', 'blue']
         # lines = ['k-', 'darkred-', 'salmon-', 'royalblue-', 'darkblue-']
@@ -260,9 +239,7 @@ def visualize_error(root, destination):
 
         if not os.path.isfile(filepath):
             fig = plt.figure(figsize=(20, 20))
-            # Plot structure:
-            # Subplot 1 = x_error, 2 = y_error, 3 = errors in x, y
-            # ax = fig.add_subplot(2, 1, 1)
+
             ax = plt.subplot2grid((2, 1), (0, 0))
             ax.set_title("x-error")
             ax.grid(color='gray', linestyle='--', axis='y')
@@ -306,6 +283,58 @@ def visualize_error(root, destination):
             fig.savefig(filepath)
             plt.close(fig)
 
+        # Save summaries using fixation data instead of raw gaze point data
+
+        filename = subject + "_error_summary_fixation.png"
+        filepath = os.path.join(subject_dir, filename)
+
+        if not os.path.isfile(filepath):
+            fig = plt.figure(figsize=(20, 20))
+            ax = plt.subplot2grid((2, 1), (0, 0))
+            ax.set_title("x-error")
+            ax.grid(color='gray', linestyle='--', axis='y')
+            for i in range(5):
+                # Numpy polyfit cannot handle NaNs -> clean the data before polyfit
+                # Also, convert to numpy array so clean indexes work
+                clean_x = np.isfinite(fixation_cp_x[i])
+                tmp_x = np.array(fixation_cp_x[i])
+                ax.scatter(x, fixation_cp_x[i], c=colors[i], label=labels[i])
+                m, b = np.polyfit(x[clean_x], tmp_x[clean_x], 1)
+                ax.plot(x, m * x + b, color=colors[i], linestyle='-')
+            ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
+
+            ax = plt.subplot2grid((2, 1), (1, 0))
+            ax.set_title("y-error")
+            ax.grid(color='gray', linestyle='--', axis='y')
+            for i in range(5):
+                clean_y = np.isfinite(fixation_cp_y[i])
+                tmp_y = np.array(fixation_cp_y[i])
+                ax.scatter(x, fixation_cp_y[i], c=colors[i], label=labels[i])
+                m, b = np.polyfit(x[clean_y], tmp_y[clean_y], 1)
+                ax.plot(x, m * x + b, color=colors[i], linestyle='-')
+            ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
+
+            fig.savefig(filepath)
+            plt.close(fig)
+
+        filename = subject + "_error_summary_xy_fixation.png"
+        filepath = os.path.join(subject_dir, filename)
+
+        if not os.path.isfile(filepath):
+            fig = plt.figure(figsize=(20, 20))
+            ax = plt.subplot2grid((1, 1), (0, 0))
+            ax.spines['left'].set_position('zero')
+            ax.spines['right'].set_color(None)
+            ax.spines['bottom'].set_position('zero')
+            ax.spines['top'].set_color(None)
+            ax.grid(color='lightgray', linestyle='--')
+
+            for i in range(5):
+                ax.plot(fixation_cp_x[i], fixation_cp_y[i], c=colors[i], linestyle='--', marker='o', label=labels[i])
+            ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
+
+            fig.savefig(filepath)
+            plt.close(fig)
 
 if __name__ == "__main__":
     # Check command line arguments
