@@ -299,8 +299,10 @@ def visualize_error(root, destination):
                 clean_x = np.isfinite(fixation_cp_x[i])
                 tmp_x = np.array(fixation_cp_x[i])
                 ax.scatter(x, fixation_cp_x[i], c=colors[i], label=labels[i])
-                m, b = np.polyfit(x[clean_x], tmp_x[clean_x], 1)
-                ax.plot(x, m * x + b, color=colors[i], linestyle='-')
+                # Need at least two valid points
+                if not len(tmp_x[clean_x]) < 2:
+                    m, b = np.polyfit(x[clean_x], tmp_x[clean_x], 1)
+                    ax.plot(x, m * x + b, color=colors[i], linestyle='-')
             ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
 
             ax = plt.subplot2grid((2, 1), (1, 0))
@@ -310,8 +312,10 @@ def visualize_error(root, destination):
                 clean_y = np.isfinite(fixation_cp_y[i])
                 tmp_y = np.array(fixation_cp_y[i])
                 ax.scatter(x, fixation_cp_y[i], c=colors[i], label=labels[i])
-                m, b = np.polyfit(x[clean_y], tmp_y[clean_y], 1)
-                ax.plot(x, m * x + b, color=colors[i], linestyle='-')
+                # Need at least two valid points
+                if not len(tmp_y[clean_y]) < 2:
+                    m, b = np.polyfit(x[clean_y], tmp_y[clean_y], 1)
+                    ax.plot(x, m * x + b, color=colors[i], linestyle='-')
             ax.legend(loc="upper left", bbox_to_anchor=(1, 1))
 
             fig.savefig(filepath)
