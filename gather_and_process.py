@@ -5,6 +5,7 @@ import numpy as np
 
 from get_calibration_folders import get_calibration_folders
 from get_calibration_error import get_calibration_error
+from calculate_metadata import calculate_metadata
 
 
 def gather_and_process(root, destination, width=3840, height=2160):
@@ -36,7 +37,6 @@ def gather_and_process(root, destination, width=3840, height=2160):
     # Averages for gaze error and fixations
     averages_file = os.path.join(export_root, destination, "processed_averages.json")
     if not os.path.isfile(datafile):
-        # File does not exist. Gather all data
         for subject, calibs in folders.items():
             calibrations_path = os.path.join(root, subject, "calibrations")
 
@@ -119,10 +119,15 @@ def gather_and_process(root, destination, width=3840, height=2160):
             json.dump(average_results, file)
             file.close()
 
+        # Calculate line fits and statistical data for average values for each subject
+        calculate_metadata(root, destination, average_results)
+
+
 
 if __name__ == "__main__":
     # Check command line arguments
     if len(sys.argv) < 3:
         print("Need at least two arguments: data root folder and destination folder")
+        print("Destination is relative to root: ../exports/<destination>")
     else:
         gather_and_process(sys.argv[1], sys.argv[2])
