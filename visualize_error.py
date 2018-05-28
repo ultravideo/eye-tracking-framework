@@ -193,7 +193,6 @@ def visualize_error(root, destination):
         cp_y = []
         fixation_cp_x = []
         fixation_cp_y = []
-        json_data_calib = {}
         # Initialize empty lists for re-arranging average values
         # Ex. the center calibration point errors are all stored in the same list index
         for i in range(5):
@@ -212,15 +211,6 @@ def visualize_error(root, destination):
                 else:
                     fixation_cp_x[i].append(float('nan'))
                     fixation_cp_y[i].append(float('nan'))
-            # Copy results into json format for output
-            tmp = {"x_error": cp_x,
-                   "y_error": cp_y,
-                   "x_stdev": np.std(cp_x),
-                   "y_stdev": np.std(cp_y),
-                   "x_variance": np.var(cp_x),
-                   "y_variance": np.var(cp_y)
-                   }
-            json_data_calib[calibration] = tmp
 
         # Save plots. Skip this step if plot already exist
         filename = subject + "_error_summary.png"
