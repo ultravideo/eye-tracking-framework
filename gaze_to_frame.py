@@ -61,10 +61,8 @@ def gaze_to_frame(location, recording, framerate=60, correction_function=lambda 
         gaze_reader.__next__()  # skip the header row
         data = gaze_reader.__next__()
 
-        frame_number = 1
-
         # Skip the black frames
-        while int(data[1]) != start_frame:
+        while int(data[1]) < start_frame:
             data = gaze_reader.__next__()
 
         initial_timestamp = float(data[2])  # used for determining to which frame the gaze should be tied
@@ -72,14 +70,13 @@ def gaze_to_frame(location, recording, framerate=60, correction_function=lambda 
 
         for row in gaze_reader:
             if initial_timestamp + frametime < float(row[2]):
-                frame_number += 1
                 if len(data_points) < threshold:
                     final_data.append(None)
                 else:
                     temp = average_gaze(data_points)
                     x, y = correction_function(temp[0], temp[1])
-                    x = resolution[0]*x
-                    y = resolution[1] - resolution[1]*y
+                    x = resolution[0] * x
+                    y = resolution[1] - resolution[1] * y
 
                     if in_frame((x, y), resolution):
                         final_data.append((x, y,))

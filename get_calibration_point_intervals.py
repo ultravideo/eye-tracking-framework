@@ -114,20 +114,18 @@ def get_calibration_point_intervals(location, recording="000", starting_frame=10
         if frame > starting_frame:
             if minimum < cp_visibility_threshold and not started:
                 # Debug
-                #print("Point fade in detected")
+                # print("Point fade in detected")
                 cp_start_frame = frame
                 started = True
             if minimum > cp_fade_out_threshold and started:
                 # Debug
-                #print("Point fade out detected")
+                # print("Point fade out detected")
                 interval_get = True
                 cp_end_frame = frame
                 if current_point == 4:
                     break
                 current_point += 1
                 started = False
-
-
 
         if interval_get:
             intervals.append([cp_start_frame, cp_end_frame])
@@ -144,6 +142,7 @@ def get_calibration_point_intervals(location, recording="000", starting_frame=10
         intervals.append([cp_start_frame, cp_end_frame])
 
     return intervals
+
 
 if __name__ == '__main__':
     print(get_calibration_point_intervals(

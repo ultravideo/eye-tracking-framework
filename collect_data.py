@@ -77,9 +77,9 @@ for dir in os.listdir(root):
                                 os.makedirs(export_path)
                             shutil.copyfile(copy_file_path, os.path.join(export_path, export_filename))
 
-                        # debug
-                        # print(os.path.join(export_path, export_filename))
-                        # print(copy_file_path)
-                        # print(os.path.join(export_path, export_filename))
+                            # debug
+                            # print(os.path.join(export_path, export_filename))
+                            # print(copy_file_path)
+                            # print(os.path.join(export_path, export_filename))
     else:
         print("  Not a directory")

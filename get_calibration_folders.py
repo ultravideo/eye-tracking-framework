@@ -1,5 +1,6 @@
 import os
 
+
 def get_calibration_folders(root):
     """
     Returns calibration folders for each test subject inside root folder.
@@ -24,10 +25,11 @@ def get_calibration_folders(root):
 
             # Check if directory contains calibrations
             if os.path.isdir(calib_dir):
-                calibrations = next(os.walk(calib_dir))[1]                        
+                calibrations = next(os.walk(calib_dir))[1]
                 output[subject] = calibrations
 
     return output
+
 
 if __name__ == "__main__":
     print(get_calibration_folders("C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results"))

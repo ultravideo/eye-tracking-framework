@@ -187,7 +187,7 @@ def visualize_error(root, destination):
                 fig.savefig(filepath)
                 plt.close(fig)
 
-        #                                               0       1           2           3           4
+        # 0       1           2           3           4
         # Group error data by calibration point index (center, bottom left, top left, top right, bottom right)
         cp_x = []
         cp_y = []
@@ -339,6 +339,7 @@ def visualize_error(root, destination):
 
             fig.savefig(filepath)
             plt.close(fig)
+
 
 if __name__ == "__main__":
     # Check command line arguments

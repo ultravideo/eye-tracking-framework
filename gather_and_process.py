@@ -79,7 +79,7 @@ def gather_and_process(root, destination, width=3840, height=2160):
                     else:
                         print("Error, x and y dimension mismatch")
 
-                    gaze_tmp[cp] = [error_avg_x, error_avg_y, error_avg_x*width, error_avg_y*height]
+                    gaze_tmp[cp] = [error_avg_x, error_avg_y, error_avg_x * width, error_avg_y * height]
 
                 avg_tmp['gaze_error'] = gaze_tmp
 
@@ -100,7 +100,7 @@ def gather_and_process(root, destination, width=3840, height=2160):
 
                         avg_x = np.average(x_coords, weights=weights)
                         avg_y = np.average(y_coords, weights=weights)
-                        fixation_tmp[cp] = [avg_x, avg_y, avg_x*width, avg_y*height]
+                        fixation_tmp[cp] = [avg_x, avg_y, avg_x * width, avg_y * height]
                     else:
                         fixation_tmp[cp] = []
                 avg_tmp['fixation_error'] = fixation_tmp
@@ -118,6 +118,7 @@ def gather_and_process(root, destination, width=3840, height=2160):
         with open(averages_file, 'w') as file:
             json.dump(average_results, file)
             file.close()
+
 
 if __name__ == "__main__":
     # Check command line arguments

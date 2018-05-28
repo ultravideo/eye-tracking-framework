@@ -1,5 +1,6 @@
 import os
 
+
 def get_video_order(root, subject):
     """
     Get the showing order of test videos for the given subject.     
@@ -14,6 +15,7 @@ def get_video_order(root, subject):
                 print(substr2[0])
 
     return substr2[0]
+
 
 if __name__ == "__main__":
     print(get_video_order("C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results", "23-f-25"))

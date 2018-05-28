@@ -4,7 +4,8 @@ import numpy as np
 import os
 from csv import reader
 
-def get_starting_frame(location, recording="000", threshold=15.):
+
+def get_starting_frame(location, recording="000", threshold=20.):
     """
     Returns zero based index of the frame that is the first frame that is not 
     completely black on the surface.
@@ -65,4 +66,4 @@ def get_starting_frame(location, recording="000", threshold=15.):
 
 if __name__ == "__main__":
     print(get_starting_frame(
-        r"D:\actual_eyetrack_results\13-m-32\calibrations", "009"))
+        r"C:\Local\sainio\Data\somedata\11-m-25\calibrations", "007"))

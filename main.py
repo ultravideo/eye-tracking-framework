@@ -63,5 +63,6 @@ def main():
     with Pool(processes=16) as pool:
         pool.map(parse_person, os.listdir(result_dir))
 
+
 if __name__ == "__main__":
     main()

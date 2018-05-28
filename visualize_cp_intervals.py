@@ -15,16 +15,16 @@ anomalies = []
 # Calibration point data
 data = []
 for i in range(5):
-    data.append({ 'start_time_min': None,
-                  'start_time_max': None,
-                  'start_time_avg': 0,
-                  'end_time_min': None,
-                  'end_time_max': None,
-                  'end_time_avg': 0,
-                  'length_min': None,
-                  'length_max': None,
-                  'length_avg': 0
-                  })
+    data.append({'start_time_min': None,
+                 'start_time_max': None,
+                 'start_time_avg': 0,
+                 'end_time_min': None,
+                 'end_time_max': None,
+                 'end_time_avg': 0,
+                 'length_min': None,
+                 'length_max': None,
+                 'length_avg': 0
+                 })
 
 with open(datafile) as file:
     stuff = json.load(file)
@@ -70,11 +70,11 @@ with open(datafile) as file:
                     data[i]['length_avg'] += length
 
                 correct_data += 1
-            # if not calib[1] == None:
-            #     for interval in calib[1]:
-            #         print(interval)
-            # else:
-            #     print(None)
+                # if not calib[1] == None:
+                #     for interval in calib[1]:
+                #         print(interval)
+                # else:
+                #     print(None)
 print("Faulty data : " + str(faulty_data))
 print("Correct data: " + str(correct_data))
 

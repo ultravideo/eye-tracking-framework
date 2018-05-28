@@ -3,6 +3,7 @@ import numpy as np
 import os
 from csv import reader
 
+
 def analyze_cp_brightness(location, recording="000", starting_frame=10):
     """
     Analyze the brightness level of the regions where calibration points appear
@@ -74,8 +75,8 @@ def analyze_cp_brightness(location, recording="000", starting_frame=10):
         warp = cv2.warpPerspective(image, trans_mat2, dsize=(width, height))
 
         # Find the minimum brightness for all the expected calibration point locations
-        if frame >= starting_frame: # Skip starting frames
-            if frame != (frames-1): # Skip last frame, it's usually a black screen
+        if frame >= starting_frame:  # Skip starting frames
+            if frame != (frames - 1):  # Skip last frame, it's usually a black screen
                 for i in range(5):
                     average = np.average(
                         warp[int(cp_centers[i][1] - cp_radius):int(cp_centers[i][1] + cp_radius), \
@@ -88,6 +89,7 @@ def analyze_cp_brightness(location, recording="000", starting_frame=10):
     # print("Processed frames: " + str(frame))
 
     return min_brightness
+
 
 if __name__ == '__main__':
     print(analyze_cp_brightness(

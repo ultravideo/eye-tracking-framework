@@ -9,7 +9,7 @@ from filter_gaps import filter_gaps
 from detect_outliers import detect_outliers
 
 
-def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
+def get_calibration_error(location, recording="000", k=3, threshold=0.02):
     """
     Calculates and returns the error for given calibration video.
     The function reads the gathered gaze points and compares them to the
@@ -82,10 +82,10 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
 
     cp_locations = [
         [0.5, 0.5],  # Center
-        [114/384, 1/3],  # Down left
-        [114/384, 2/3],  # Up left
-        [270/384, 2/3],  # Up right
-        [270/384, 1/3]  # Down right
+        [114 / 384, 1 / 3],  # Down left
+        [114 / 384, 2 / 3],  # Up left
+        [270 / 384, 2 / 3],  # Up right
+        [270 / 384, 1 / 3]  # Down right
     ]
 
     # Calibration point names
@@ -106,7 +106,7 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
     # Go through each point interval and calculate gaze error
     for point in points:
         # Gather the gaze points between interval start and end frames
-        interval = [ i for i in gaze_points if(i[0] >= point[0] and i[0] <= point[1])]
+        interval = [i for i in gaze_points if (i[0] >= point[0] and i[0] <= point[1])]
 
         # Gather fixations inside current interval
         fixation_count = 0
@@ -152,9 +152,9 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
             error_sum_y += error_y_tmp
             error_x.append(error_x_tmp)
             error_y.append(error_y_tmp)
-            error_comb.append(fabs(error_x_tmp)+fabs(error_y_tmp))
+            error_comb.append(fabs(error_x_tmp) + fabs(error_y_tmp))
 
-            #print("Error x: " +str(error_x_tmp) + " y: " + str(error_y_tmp))
+            # print("Error x: " +str(error_x_tmp) + " y: " + str(error_y_tmp))
 
         # Check points for outliers using k-NN
         outlier_indices = detect_outliers(error_comb)
@@ -171,8 +171,8 @@ def get_calibration_error(location, recording="000", k = 3, threshold = 0.02):
 
         # Calculate separate fixation error
 
-
     return gaze_error, fixation_error
+
 
 if __name__ == "__main__":
     pp = pprint.PrettyPrinter(indent=2)

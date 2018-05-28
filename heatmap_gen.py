@@ -5,14 +5,14 @@ import cv2
 
 
 def euclidean_distance(center, point):
-    return sqrt((center[0] - point[0])**2 + (center[1] - point[1])**2)
+    return sqrt((center[0] - point[0]) ** 2 + (center[1] - point[1]) ** 2)
 
 
 def generate_gaze_center(image_width):
     gaze_size = image_width // 15
     gaze_size += gaze_size % 2
     arr = np.zeros(shape=(gaze_size, gaze_size), dtype=np.float64)
-    center = (gaze_size/2, gaze_size/2,)
+    center = (gaze_size / 2, gaze_size / 2,)
     for y in range(gaze_size):
         for x in range(gaze_size):
             arr[y, x] = max(0., gaze_size // 2 - euclidean_distance(center, (x, y)))
@@ -45,11 +45,11 @@ def write_video(video, gaze_points, out_video_name):
     for i, row in enumerate(gaze_points):
         if i and i % 50 == 0:
             print("{}th frame of {}.".format(i, os.path.basename(video)))
-        blank = np.zeros(shape=(resolution[1]+gaze_size, resolution[0]+gaze_size), dtype=np.float64)
+        blank = np.zeros(shape=(resolution[1] + gaze_size, resolution[0] + gaze_size), dtype=np.float64)
         for gaze in row:
-            blank[gaze[1]:gaze[1]+gaze_size, gaze[0]:gaze[0]+gaze_size] += gaze_center
+            blank[gaze[1]:gaze[1] + gaze_size, gaze[0]:gaze[0] + gaze_size] += gaze_center
         a = np.zeros(blank.shape, np.uint8)
-        a = cv2.normalize(blank, a,alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=np.uint8())
+        a = cv2.normalize(blank, a, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=np.uint8())
         b = cv2.applyColorMap(a, cv2.COLORMAP_JET)
 
         suc, image = input_video.read()
