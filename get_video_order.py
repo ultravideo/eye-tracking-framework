@@ -7,14 +7,15 @@ def get_video_order(root, subject):
     """
     log_file_path = os.path.join(root, subject, "log.txt")
 
+    order = []
     with open(log_file_path) as logfile:
         for line in logfile:
             if "started video" in line:
                 substr = line.split("started video ")
                 substr2 = substr[1].split(" ")
-                print(substr2[0])
+                order.append(substr2[0])
 
-    return substr2[0]
+    return order
 
 
 if __name__ == "__main__":
