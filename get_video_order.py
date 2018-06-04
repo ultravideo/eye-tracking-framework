@@ -1,11 +1,11 @@
 import os
 
 
-def get_video_order(root, subject):
+def get_video_order(subject):
     """
-    Get the showing order of test videos for the given subject.     
+    Get the showing order of test videos for the given subject.    
     """
-    log_file_path = os.path.join(root, subject, "log.txt")
+    log_file_path = os.path.join(subject, "log.txt")
 
     order = []
     with open(log_file_path) as logfile:
