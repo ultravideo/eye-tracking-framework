@@ -13,6 +13,14 @@ CP_NAMES = ["center",
             "top_right",
             "bottom_right"]
 
+CP_LOCATIONS = [
+        [0.5, 0.5],  # Center
+        [114 / 384, 1 / 3],  # Down left
+        [114 / 384, 2 / 3],  # Up left
+        [270 / 384, 2 / 3],  # Up right
+        [270 / 384, 1 / 3]]  # Down right
+
+
 def get_cp_averages(subject):
     calibrations_path = os.path.join(subject, "calibrations")
 
@@ -56,7 +64,8 @@ def get_cp_averages(subject):
 
                 if length > outliers:
                     error_avg_x = error_sum_x / (length - outliers)
-                    error_avg_y = error_sum_y / (length - outliers)
+                    # Flip y to negative, since in OpenCV y-is positive downwards
+                    error_avg_y = -(error_sum_y / (length - outliers))
             else:
                 print("Error, x and y dimension mismatch")
 
@@ -139,6 +148,12 @@ def get_timeline(subject):
             item['length'] = item['frame_count'] / item['fps']
             break
 
+    for item in timeline:
+        if item['name'] == "rushHour_1920x1080_50.y4m":
+            item['fps'] = 25
+            item['length'] = item['frame_count'] / item['fps']
+            break
+
     return timeline
 
 
@@ -177,7 +192,45 @@ def get_video_start_time(timeline, video):
     return time
 
 
-def get_correction_func(subject):
+def get_video_end_time(timeline, video):
+    time = 0
+    found = False
+    for item in timeline:
+        if item['name'] == video:
+            found = True
+        time += item['length']
+        if found:
+            break
+
+    return time
+
+
+def get_transform_matrix_at_time(video, timeline, linefits):
+    # Use the estimated average position of the five calibration points to calculate
+    # perspective transform matrix
+
+    # Get time from middle of video
+    time = (get_video_start_time(timeline, video) + get_video_end_time(timeline, video)) / 2
+
+    tmp = []
+    for i in range(1, 5):
+        m = linefits[CP_NAMES[i]]['x'][0]
+        b = linefits[CP_NAMES[i]]['x'][1]
+        x_pos = m * time + b
+        m = linefits[CP_NAMES[i]]['y'][0]
+        b = linefits[CP_NAMES[i]]['y'][1]
+        y_pos = m * time + b
+        tmp.append([CP_LOCATIONS[i][0] + x_pos, CP_LOCATIONS[i][1] + y_pos])
+
+    # Note: in OpenCV, y is positive downwards
+    # In Pupil Labs software, y is positive upwards
+    pts1 = np.float32(tmp)
+    pts2 = np.float32([CP_LOCATIONS[1], CP_LOCATIONS[2], CP_LOCATIONS[3], CP_LOCATIONS[4]])
+
+    return cv2.getPerspectiveTransform(pts1, pts2)
+
+
+def get_correction_func(subject, video):
     """
     Get the gaze point correction function for given subject.
     
@@ -207,32 +260,17 @@ def get_correction_func(subject):
         tmp['y'] = [m, b]
         linefits[CP_NAMES[i]] = tmp
 
-    def get_transform_matrix_at_time(time):
-        # Use the estimated average position of the five calibration points to calculate
-        # perspective transform matrix
-        tmp = []
-        for i in range(1, 5):
-            m = linefits[CP_NAMES[i]]['x'][0]
-            b = linefits[CP_NAMES[i]]['x'][1]
-            x_pos = m * time + b
-            m = linefits[CP_NAMES[i]]['y'][0]
-            b = linefits[CP_NAMES[i]]['y'][1]
-            y_pos = m * time + b
-            tmp.append([x_pos, y_pos])
+    M = get_transform_matrix_at_time(video, timeline, linefits)
 
-        # Note: in OpenCV, y is positive downwards
-        # In Pupil Labs software, y is positive upwards
-        pts1 = np.float32(tmp)
-        pts2 = np.float32([[0, 0], [1, 0], [0, 1], [1, 1]])
+    def correct_coordinates(x, y):
+        tmp = np.float32([[[x, y]]])
+        corr_tmp = cv2.perspectiveTransform(tmp, M)
+        return corr_tmp[0, 0]
 
-        return cv2.getPerspectiveTransform(pts1, pts2)
-
-    return get_transform_matrix_at_time
+    return correct_coordinates
 
 
 if __name__ == "__main__":
     func = get_correction_func(r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results\23-f-25")
 
-    for i in range(0, 100, 10):
-        print(func(i))
 

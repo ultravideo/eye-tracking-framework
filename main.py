@@ -3,6 +3,7 @@ import os
 from multiprocessing import Pool
 from shutil import copy
 from gaze_to_frame import gaze_to_frame
+from get_correction_func import get_correction_func
 
 
 def make_dir(directory):
@@ -21,7 +22,7 @@ def parse_log(log):
 
 
 def parse_person(subject):
-    result_dir = r"D:\actual_eyetracking_results"
+    result_dir = r"D:\actual_eyetrack_results"
 
     if len(sys.argv) >= 2:
         output_dir = sys.argv[1]
@@ -34,18 +35,20 @@ def parse_person(subject):
 
     make_dir(os.path.join(output_dir, subject))
 
-    # Instead of the lambda this should be a call to a function that calculates the parameters for the correction
-    # function and returns a function that uses those parameters to calculate the corrected coordinates
-    correction_func = lambda x, y, seq: (x, y)
+
 
     videos = parse_log(os.path.join(subject_path, "log.txt"))
     count = 1
 
     for video in videos:
+        # Instead of the lambda this should be a call to a function that calculates the parameters for the correction
+        # function and returns a function that uses those parameters to calculate the corrected coordinates
+        correction_func = get_correction_func(subject_path, video)
+
         make_dir(os.path.join(output_dir, video))
         frame_rate = int(video.split("_")[2][0:2])
         data = gaze_to_frame(os.path.join(subject_path, video), "000", frame_rate,
-                             lambda x, y: correction_func(x, y, count))
+                             correction_func)
 
         result_file_path = os.path.join(output_dir, video, "{}.csv".format(subject))
 
@@ -59,7 +62,7 @@ def parse_person(subject):
 
 
 def main():
-    result_dir = r"D:\actual_eyetracking_results"
+    result_dir = r"D:\actual_eyetrack_results"
     with Pool(processes=16) as pool:
         pool.map(parse_person, os.listdir(result_dir))
 

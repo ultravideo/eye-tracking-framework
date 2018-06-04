@@ -63,12 +63,13 @@ def write_video(video, gaze_points, out_video_name):
 
 
 if __name__ == "__main__":
-    result_dir = r"C:\local\sainio\documents\eyetracking_extraction\result"
-    video_dir = r"C:\Local\sainio\Data\eye_tracking_final_sequences_y4m"
-    output_dir = r"C:\local\sainio\documents\eyetracking_extraction\result\videos"
+    result_dir = r"D:\exports"
+    video_dir = r"D:\Raw_Files\eye_tracking_final_sequences_y4m"
+    output_dir = r"D:\exports\heatmaps"
 
     for video in os.listdir(video_dir):
         if video == "blank":
             continue
         temp = get_gaze_points(os.path.join(result_dir, video))
         write_video(os.path.join(video_dir, video), temp, os.path.join(output_dir, video.split(".")[0] + ".mkv"))
+        
