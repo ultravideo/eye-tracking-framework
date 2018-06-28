@@ -1,6 +1,11 @@
 import os
 import cv2
 import numpy as np
+
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.cluster import KMeans
+from sklearn import metrics
+
 from get_calibration_error import get_calibration_error
 from get_video_order import get_video_order
 
@@ -19,6 +24,89 @@ CP_LOCATIONS = [
         [114 / 384, 2 / 3],  # Up left
         [270 / 384, 2 / 3],  # Up right
         [270 / 384, 1 / 3]]  # Down right
+
+
+# If most data points fit inside this threshold window, clustering is not needed
+cluster_threshold_width = 0.041
+cluster_threshold_height = 0.072
+
+# If this percentage of data points is inside the window, clustering is not needed
+cluster_percentage_threshold = 0.9
+
+max_clusters = 5
+
+
+def choose_cluster(data, labels, n_clusters):
+    # Choose best cluster
+    clusters = {}
+
+    best_score = 0
+    best_cluster = 0
+
+    for cluster in range(n_clusters):
+        clusters[cluster] = np.array([x[0] for x in zip(data, labels) if x[1] == cluster])
+
+        if best_score < len(clusters[cluster]):
+            best_score = len(clusters[cluster])
+            best_cluster = cluster
+
+        print("Cluster", cluster, "Size", len(clusters[cluster]))
+
+    #     percentual_size = len(clusters[cluster]) / len(data)
+    #     variance = np.var(clusters[cluster])
+    #
+    #     score = percentual_size / variance
+    #     if score > best_score:
+    #         best_score = score
+    #         best_cluster = cluster
+    #     print("Cluster", cluster, "Size", len(clusters[cluster]), "Variance", variance, "Score", score)
+    #
+    # print("Best cluster", best_cluster, "with score", best_score)
+    print("Best cluster", best_cluster, "with score", best_score)
+
+    return clusters[best_cluster]
+
+
+def cluster_analysis(data):
+    # Cluster gaze points if they are dispersed.
+    # Return best cluster, other clusters are pruned out
+    avg = np.average(data, axis=0)
+
+    x_low = avg[0] - cluster_threshold_width / 2
+    x_high = avg[0] + cluster_threshold_width / 2
+    y_low = avg[1] - cluster_threshold_height / 2
+    y_high = avg[1] + cluster_threshold_height / 2
+    in_threshold = 0
+    # Check percentage of gaze points within threshold
+    for i in data:
+        if not (i[0] < x_low or i[0] > x_high or i[1] < y_low or i[1] > y_high):
+            in_threshold += 1
+    print("%d / %d = %f" % (in_threshold, len(data), in_threshold / len(data)))
+
+    if in_threshold / len(data) < cluster_percentage_threshold:
+        # Perform clustering
+        # Decide optimal number of clusters with silhouette method. Try with cluster num between 2 to max clusters
+        tmp = {} # Store clustering scores here
+        c_labels = {}
+        for n_clusters in range(2, max_clusters+1):
+            # Initialize clustering with n clusters and a random state for consistent results
+            cluster_func = KMeans(n_clusters=n_clusters, random_state=1)
+            c_labels[n_clusters] = cluster_func.fit_predict(data)
+
+            # The average silhouette score for n clusters
+            silhouette_avg = metrics.silhouette_score(data, c_labels[n_clusters])
+
+            tmp[n_clusters] = silhouette_avg
+
+        optimal_n = max(tmp.items(), key=lambda x: x[1])
+        print("Using", optimal_n[0], "clusters.")
+
+        output = choose_cluster(data, c_labels[optimal_n[0]], optimal_n[0])
+
+    else:
+        output = data
+
+    return output
 
 
 def get_cp_averages(subject):
@@ -48,26 +136,18 @@ def get_cp_averages(subject):
         # Calculate averages for raw gaze points
         gaze_tmp = {}
         for cp, values in gaze_error.items():
-            error_avg_x = 0
-            error_avg_y = 0
-            error_sum_x = 0
-            error_sum_y = 0
-            length = len(values[0])
-            outliers = len(values[3])
-            # Check if x and y length is the same
-            if length == len(values[1]):
-                for i in range(length):
-                    # Skip if index is marked as outlier
-                    if i not in values[3]:
-                        error_sum_x += values[0][i]
-                        error_sum_y += values[1][i]
+            print("Processing: ", os.path.basename(os.path.normpath(subject)), calibration, cp)
 
-                if length > outliers:
-                    error_avg_x = error_sum_x / (length - outliers)
-                    # Flip y to negative, since in OpenCV y-is positive downwards
-                    error_avg_y = -(error_sum_y / (length - outliers))
-            else:
-                print("Error, x and y dimension mismatch")
+            x = [x for index, x in enumerate(values[0]) if index not in values[3]]
+            y = [y for index, y in enumerate(values[1]) if index not in values[3]]
+
+            # Cluster analysis
+            # Perform clustering if gaze points are dispersed.
+            # After clustering, select the best cluster for subsequent processing
+            clustered_data = cluster_analysis(np.column_stack((x, y)))
+
+            error_avg_x = np.average(clustered_data[:, 0])
+            error_avg_y = np.average(clustered_data[:, 1])
 
             gaze_tmp[cp] = [error_avg_x, error_avg_y]
 
@@ -271,6 +351,5 @@ def get_correction_func(subject, video):
 
 
 if __name__ == "__main__":
-    func = get_correction_func(r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results\23-f-25")
-
+    func = get_correction_func(r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results\23-f-25", "FourPeople_1280x720_60.y4m")
 
