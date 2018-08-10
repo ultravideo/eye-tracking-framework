@@ -44,7 +44,8 @@ def filter_gaps(csv_file_path, start_frame):
             else:
                 previous_time = float(row[GAZE_TIMESTAMP])
 
-    print("Gaps found " + str(len(gaps)))
+    # Debug
+    # print("Gaps found " + str(len(gaps)))
 
     # Analyze gaps. Leave only significant gaps or gap clusters
     final_gaps = []
@@ -75,8 +76,9 @@ def filter_gaps(csv_file_path, start_frame):
     if not written:
         final_gaps.append([gaps_in_cluster, cluster_start, cluster_end])
 
-    for gap in final_gaps:
-        print("Gaps: " + str(gap[0]) + " Time " + str(gap[1]) + " - " + str(gap[2]))
+    # Debug
+    # for gap in final_gaps:
+    #     print("Gaps: " + str(gap[0]) + " Time " + str(gap[1]) + " - " + str(gap[2]))
 
     # Some variables for drawing a plot later
     # plot_x_start = data[0][GAZE_TIMESTAMP]
@@ -117,8 +119,9 @@ def filter_gaps(csv_file_path, start_frame):
         else:
             filtered_data.append(row)
 
-    print("Filtered data size " + str(len(filtered_data)))
-    print("Eliminated data size " + str(len(eliminated_data)))
+    # Debug
+    # print("Filtered data size " + str(len(filtered_data)))
+    # print("Eliminated data size " + str(len(eliminated_data)))
 
     # Return resulting filtered data
     return filtered_data
