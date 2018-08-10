@@ -3,6 +3,7 @@ import json
 from csv import reader
 from math import fabs
 import pprint
+import numpy as np
 
 from compress_gaze_points import compress_gaze_points
 from filter_gaps import filter_gaps
@@ -101,8 +102,9 @@ def get_calibration_error(location, recording="000", k=3, threshold=0.02):
     error_sum_x = 0
     error_sum_y = 0
 
-    print("\nTotal fixations: " + str(len(fixations)))
-    print(fixations)
+    # Debug
+    # print("\nTotal fixations: " + str(len(fixations)))
+    # print(fixations)
     # Go through each point interval and calculate gaze error
     for point in points:
         # Gather the gaze points between interval start and end frames
@@ -135,7 +137,8 @@ def get_calibration_error(location, recording="000", k=3, threshold=0.02):
                 tmp[3] = tmp[3] - cp_locations[current_point][1]
                 current_fixations.append(tmp)
 
-        print("Fixations in interval (" + str(point[0]) + "-" + str(point[1]) + "): " + str(fixation_count))
+        # Debug
+        # print("Fixations in interval (" + str(point[0]) + "-" + str(point[1]) + "): " + str(fixation_count))
         fixation_error[cp_names[current_point]] = current_fixations
 
         error_x = []
@@ -157,19 +160,20 @@ def get_calibration_error(location, recording="000", k=3, threshold=0.02):
             # print("Error x: " +str(error_x_tmp) + " y: " + str(error_y_tmp))
 
         # Check points for outliers using k-NN
-        outlier_indices = detect_outliers(error_comb)
+        # outlier_indices = detect_outliers(error_comb)
+        points = np.column_stack((error_x, error_y))
+        outlier_indices = detect_outliers(points)
         # Group error values together by calibration point index
         gaze_error[cp_names[current_point]] = [error_x, error_y, error_comb, outlier_indices]
 
-        print("Outliers detected: " + str(len(outlier_indices)))
-        if len(outlier_indices) > 0:
-            print(outlier_indices)
+        # Debug
+        # print("Outliers detected: " + str(len(outlier_indices)))
+        # if len(outlier_indices) > 0:
+        #     print(outlier_indices)
 
         error_sum_x = 0
         error_sum_y = 0
         current_point += 1
-
-        # Calculate separate fixation error
 
     return gaze_error, fixation_error
 
