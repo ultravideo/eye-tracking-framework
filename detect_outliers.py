@@ -1,38 +1,50 @@
 from math import fabs
+from sklearn.neighbors import LocalOutlierFactor
 
 
-def detect_outliers(points, k=3, threshold=0.02):
+def detect_outliers(points, k=10):
     """
     Detect outliers in given time series.
-    Compare each point against every other in the series.
-    If point has enough (k) close neighbors, it is valid.
+    Use LocalOutlierFactor to for detection.
     Returns an array of indexes of outlying points.
     """
+    # print(points)
     outlier_indices = []
-    index = 0
-    neighbors = 0
-    valid = False
-    for value in points:
-        compare_index = 0
-        # Compare against all other points
-        for compare in points:
-            # Skip if comparing same index
-            if not index == compare_index:
-                if fabs(value - compare) < threshold:
-                    # Neighbor found
-                    neighbors += 1
-                    if neighbors >= k:
-                        # Enough neighbors found
-                        valid = True
-                        break
-            compare_index += 1
-        if not valid:
-            # Mark outlier index
-            outlier_indices.append(index)
-        else:
-            valid = False
-        neighbors = 0
-        index += 1
+    # index = 0
+    # neighbors = 0
+    # valid = False
+    # for value in points:
+    #     compare_index = 0
+    #     # Compare against all other points
+    #     for compare in points:
+    #         # Skip if comparing same index
+    #         if not index == compare_index:
+    #             if fabs(value - compare) < threshold:
+    #                 # Neighbor found
+    #                 neighbors += 1
+    #                 if neighbors >= k:
+    #                     # Enough neighbors found
+    #                     valid = True
+    #                     break
+    #         compare_index += 1
+    #     if not valid:
+    #         # Mark outlier index
+    #         outlier_indices.append(index)
+    #     else:
+    #         valid = False
+    #     neighbors = 0
+    #     index += 1
+
+    clf = LocalOutlierFactor(n_neighbors=k)
+    pred = clf.fit_predict(points)
+
+    for idx, i in enumerate(pred):
+        if i == -1:
+            outlier_indices.append(idx)
+
+    # print(len(points))
+    # print(len(outlier_indices))
+    # print(outlier_indices)
 
     return outlier_indices
 
