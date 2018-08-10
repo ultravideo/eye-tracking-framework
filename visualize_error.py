@@ -4,8 +4,6 @@ import json
 import numpy as np
 import sys
 
-from get_calibration_error import get_calibration_error
-from get_calibration_folders import get_calibration_folders
 from gather_and_process import gather_and_process
 
 X_WIDTH = 3840
