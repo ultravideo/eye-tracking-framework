@@ -56,20 +56,19 @@ def write_video(video, gaze_points, out_video_name):
         if not suc:
             print("too many frames " + video)
             break
-        out_video.write(cv2.addWeighted(b[offset:-offset, offset:-offset], 0.7, image, 0.3, 0))
+        out_video.write(cv2.addWeighted(b[offset:-offset, offset:-offset], 0.5, image, 0.5, 0))
 
     out_video.release()
     input_video.release()
 
 
 if __name__ == "__main__":
-    result_dir = r"D:\exports"
+    result_dir = r"D:\exports_4"
     video_dir = r"D:\Raw_Files\eye_tracking_final_sequences_y4m"
-    output_dir = r"D:\exports\heatmaps"
+    output_dir = r"D:\exports_4\heatmaps"
 
     for video in os.listdir(video_dir):
         if video == "blank":
             continue
         temp = get_gaze_points(os.path.join(result_dir, video))
         write_video(os.path.join(video_dir, video), temp, os.path.join(output_dir, video.split(".")[0] + ".mkv"))
-        
