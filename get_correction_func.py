@@ -1,10 +1,12 @@
 import os
 import cv2
 import numpy as np
+from math import fabs
 
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.cluster import KMeans
 from sklearn import metrics
+import matplotlib.pyplot as plt
 
 from get_calibration_error import get_calibration_error
 from get_video_order import get_video_order
@@ -25,6 +27,10 @@ CP_LOCATIONS = [
         [270 / 384, 2 / 3],  # Up right
         [270 / 384, 1 / 3]]  # Down right
 
+# When calculating transform matrix, points on the average line are
+# clamped to zero or moved towards zero by these values
+clamp_x = 0.041
+clamp_y = 0.072
 
 # If most data points fit inside this threshold window, clustering is not needed
 cluster_threshold_width = 0.041
@@ -50,7 +56,8 @@ def choose_cluster(data, labels, n_clusters):
             best_score = len(clusters[cluster])
             best_cluster = cluster
 
-        print("Cluster", cluster, "Size", len(clusters[cluster]))
+        # Debug
+        # print("Cluster", cluster, "Size", len(clusters[cluster]))
 
     #     percentual_size = len(clusters[cluster]) / len(data)
     #     variance = np.var(clusters[cluster])
@@ -62,7 +69,8 @@ def choose_cluster(data, labels, n_clusters):
     #     print("Cluster", cluster, "Size", len(clusters[cluster]), "Variance", variance, "Score", score)
     #
     # print("Best cluster", best_cluster, "with score", best_score)
-    print("Best cluster", best_cluster, "with score", best_score)
+    # Debug
+    # print("Best cluster", best_cluster, "with score", best_score)
 
     return clusters[best_cluster]
 
@@ -81,12 +89,13 @@ def cluster_analysis(data):
     for i in data:
         if not (i[0] < x_low or i[0] > x_high or i[1] < y_low or i[1] > y_high):
             in_threshold += 1
-    print("%d / %d = %f" % (in_threshold, len(data), in_threshold / len(data)))
+    # Debug
+    # print("%d / %d = %f" % (in_threshold, len(data), in_threshold / len(data)))
 
     if in_threshold / len(data) < cluster_percentage_threshold:
         # Perform clustering
         # Decide optimal number of clusters with silhouette method. Try with cluster num between 2 to max clusters
-        tmp = {} # Store clustering scores here
+        tmp = {}  # Store clustering scores here
         c_labels = {}
         for n_clusters in range(2, max_clusters+1):
             # Initialize clustering with n clusters and a random state for consistent results
@@ -99,7 +108,8 @@ def cluster_analysis(data):
             tmp[n_clusters] = silhouette_avg
 
         optimal_n = max(tmp.items(), key=lambda x: x[1])
-        print("Using", optimal_n[0], "clusters.")
+        # Debug
+        # print("Using", optimal_n[0], "clusters.")
 
         output = choose_cluster(data, c_labels[optimal_n[0]], optimal_n[0])
 
@@ -144,12 +154,16 @@ def get_cp_averages(subject):
             # Cluster analysis
             # Perform clustering if gaze points are dispersed.
             # After clustering, select the best cluster for subsequent processing
-            clustered_data = cluster_analysis(np.column_stack((x, y)))
+            tmp_data = np.column_stack((x, y))
+            if len(tmp_data) > 0:
+                clustered_data = cluster_analysis(tmp_data)
 
-            error_avg_x = np.average(clustered_data[:, 0])
-            error_avg_y = np.average(clustered_data[:, 1])
+                error_avg_x = np.average(clustered_data[:, 0])
+                error_avg_y = np.average(clustered_data[:, 1])
 
-            gaze_tmp[cp] = [error_avg_x, error_avg_y]
+                gaze_tmp[cp] = [error_avg_x, error_avg_y]
+            else:
+                gaze_tmp[cp] = []
 
         avg_tmp['gaze_error'] = gaze_tmp
 
@@ -196,7 +210,7 @@ def get_timeline(subject):
 
     calibrations = get_calibration_folders(subject)
 
-    # Construct time line. Insert calibrations into timeline after every 4 normal videos
+    # Construct time line. Insert calibrations into timeline after every 5 normal videos
     # Calibrations last around 10 seconds average
     calibration_time = 10.0
     timeline = []
@@ -293,24 +307,40 @@ def get_transform_matrix_at_time(video, timeline, linefits):
     time = (get_video_start_time(timeline, video) + get_video_end_time(timeline, video)) / 2
 
     tmp = []
+    # Use only the corner calibration points
     for i in range(1, 5):
         m = linefits[CP_NAMES[i]]['x'][0]
         b = linefits[CP_NAMES[i]]['x'][1]
         x_pos = m * time + b
+        # if fabs(x_pos) < clamp_x:
+        #     x_pos = 0
+        # else:
+        #     if x_pos < 0:
+        #         x_pos += clamp_x
+        #     else:
+        #         x_pos -= clamp_x
         m = linefits[CP_NAMES[i]]['y'][0]
         b = linefits[CP_NAMES[i]]['y'][1]
         y_pos = m * time + b
+        # if fabs(y_pos) < clamp_y:
+        #     y_pos = 0
+        # else:
+        #     if y_pos < 0:
+        #         y_pos += clamp_y
+        #     else:
+        #         y_pos -= clamp_y
         tmp.append([CP_LOCATIONS[i][0] + x_pos, CP_LOCATIONS[i][1] + y_pos])
 
     # Note: in OpenCV, y is positive downwards
     # In Pupil Labs software, y is positive upwards
+    # The y-axis is flipped when applying the transform in 'gaze_to_frame.py'
     pts1 = np.float32(tmp)
     pts2 = np.float32([CP_LOCATIONS[1], CP_LOCATIONS[2], CP_LOCATIONS[3], CP_LOCATIONS[4]])
 
     return cv2.getPerspectiveTransform(pts1, pts2)
 
 
-def get_correction_func(subject, video):
+def get_correction_func(subject, video, calibration="001"):
     """
     Get the gaze point correction function for given subject.
     
@@ -326,21 +356,30 @@ def get_correction_func(subject, video):
     calibrations = get_calibration_folders(subject)
 
     # Get x axis values for line fitting
-    x = []
+    x_tmp = []
     for i in range(len(calibrations)):
-        x.append(get_video_start_time(timeline, calibrations[i]))
+        x_tmp.append(get_video_start_time(timeline, calibrations[i]))
+
+    x = np.array(x_tmp)
 
     # Calculate line fits for each calibration point
     linefits = {}
+
     for i in range(1, 5):
         tmp = {}
+
         m, b = np.polyfit(x, cp_ordered_data[CP_NAMES[i]][0], 1)
         tmp['x'] = [m, b]
+
         m, b = np.polyfit(x, cp_ordered_data[CP_NAMES[i]][1], 1)
         tmp['y'] = [m, b]
+
         linefits[CP_NAMES[i]] = tmp
 
-    M = get_transform_matrix_at_time(video, timeline, linefits)
+    if video == "calibrations":
+        M = get_transform_matrix_at_time(calibration, timeline, linefits)
+    else:
+        M = get_transform_matrix_at_time(video, timeline, linefits)
 
     def correct_coordinates(x, y):
         tmp = np.float32([[[x, y]]])
@@ -352,4 +391,3 @@ def get_correction_func(subject, video):
 
 if __name__ == "__main__":
     func = get_correction_func(r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results\23-f-25", "FourPeople_1280x720_60.y4m")
-
