@@ -3,8 +3,9 @@ def compress_gaze_points(data):
     Calculate the averages of gaze points on the same frame and
     return compressed gaze data.
     """
-    print("Compressing data points found in same frames")
-    print("Original data size: " + str(len(data)))
+    # Debug
+    # print("Compressing data points found in same frames")
+    # print("Original data size: " + str(len(data)))
 
     tmp_data = []
     frame = int(data[0][0])
@@ -26,6 +27,7 @@ def compress_gaze_points(data):
             sum_x = float(row[2])
             sum_y = float(row[3])
 
-    print("Compressed data size: " + str(len(tmp_data)))
+    # Debug
+    # print("Compressed data size: " + str(len(tmp_data)))
 
     return tmp_data
