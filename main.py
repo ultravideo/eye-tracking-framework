@@ -5,6 +5,11 @@ from shutil import copy
 from gaze_to_frame import gaze_to_frame
 from get_correction_func import get_correction_func
 
+ignore_person = ['0-f-35',
+                 '16-f-43',
+                 '28-f-23',
+                 '32-f-26',
+                 '33-f-36']
 
 def make_dir(directory):
     if not os.path.exists(directory):
@@ -22,6 +27,9 @@ def parse_log(log):
 
 
 def parse_person(subject):
+    if subject in ignore_person:
+        print("Skipping", subject)
+        return
     result_dir = r"D:\actual_eyetrack_results"
 
     if len(sys.argv) >= 2:
@@ -63,6 +71,9 @@ def parse_person(subject):
 
 def main():
     result_dir = r"D:\actual_eyetrack_results"
+
+    # parse_person('17-m-21')
+
     with Pool(processes=16) as pool:
         pool.map(parse_person, os.listdir(result_dir))
 
