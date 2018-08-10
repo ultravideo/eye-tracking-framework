@@ -46,7 +46,10 @@ def gaze_to_frame(location, recording, framerate=60, correction_function=lambda 
 
     assert (gaze_file_path[-4:] == ".csv")  # Make sure gaze file was actually found
 
-    resolution = [int(x) for x in os.path.basename(location).split("_")[1].split("x")]
+    if os.path.basename(os.path.normpath(location)) == "calibrations":
+        resolution = [3840, 2160]
+    else:
+        resolution = [int(x) for x in os.path.basename(location).split("_")[1].split("x")]
     frametime = 1. / framerate
 
     # For validating the data the threshold in the csv file can't really be used since the capture software
@@ -61,6 +64,8 @@ def gaze_to_frame(location, recording, framerate=60, correction_function=lambda 
         gaze_reader.__next__()  # skip the header row
         data = gaze_reader.__next__()
 
+        start_time = float(data[2])
+
         # Skip the black frames
         while int(data[1]) < start_frame:
             data = gaze_reader.__next__()
@@ -69,6 +74,7 @@ def gaze_to_frame(location, recording, framerate=60, correction_function=lambda 
         data_points = []
 
         for row in gaze_reader:
+            timestamp = float(row[2]) - start_time
             if initial_timestamp + frametime < float(row[2]):
                 if len(data_points) < threshold:
                     final_data.append(None)
@@ -77,6 +83,7 @@ def gaze_to_frame(location, recording, framerate=60, correction_function=lambda 
                     x, y = correction_function(temp[0], temp[1])
                     x = resolution[0] * x
                     y = resolution[1] - resolution[1] * y
+
 
                     if in_frame((x, y), resolution):
                         final_data.append((x, y,))
