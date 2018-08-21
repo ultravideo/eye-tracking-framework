@@ -25,7 +25,7 @@ def parse_log(log):
 
 
 def parse_person(subject):
-    if subject in cfg.ignore_person:
+    if subject in cfg.IGNORE_PERSON:
         print("Skipping", subject)
         return
 
@@ -34,7 +34,7 @@ def parse_person(subject):
     else:
         output_dir = "."
 
-    subject_path = os.path.join(cfg.results_directory, subject)
+    subject_path = os.path.join(cfg.RESULTS_DIRECTORY, subject)
     if not os.path.isdir(subject_path):
         return
 
@@ -50,7 +50,7 @@ def parse_person(subject):
         frame_rate = int(video.split("_")[2][0:2])
 
         # The recording is "000" for all normal videos
-        # Only the calibrations folder contains differing recording numbers
+        # Only the calibrations folder contains recording numbers other that "000"
         data = gaze_to_frame(os.path.join(subject_path, video), "000", frame_rate,
                              correction_func)
 
@@ -67,7 +67,7 @@ def parse_person(subject):
 
 def main():
     with Pool(processes=16) as pool:
-        pool.map(parse_person, os.listdir(cfg.results_directory))
+        pool.map(parse_person, os.listdir(cfg.RESULTS_DIRECTORY))
 
 
 if __name__ == "__main__":
