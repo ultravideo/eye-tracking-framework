@@ -66,6 +66,8 @@ def parse_person(subject):
 
 
 def main():
+    if not cfg.config_check():
+        return
     with Pool(processes=16) as pool:
         pool.map(parse_person, os.listdir(cfg.RESULTS_DIRECTORY))
 
