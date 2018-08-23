@@ -1,5 +1,6 @@
 from csv import reader
-import numpy as np
+
+import config as cfg
 
 # Index definitions
 WORLD_TIMESTAMP = 0
@@ -12,15 +13,11 @@ Y_SCALED = 6
 ON_SRF = 7
 CONFIDENCE = 8
 
-GAZE_STAMP_THRESHOLD = 0.0043  # If time between two gaze data points is larger than this, there's a gap
-BLINK_REMOVE_THRESHOLD = 0.2  # This amount in seconds is removed before and after a detected gap
-CLUSTER_THRESHOLD = 5  # If there are less than 5 gaps in a cluster, ignore gap
-
 
 def filter_gaps(csv_file_path, start_frame):
     """
-    Filters out gaps in collected data. The goal is to filter out
-    gaps caused by the subject blinking
+    Filters out gaps (missing measurements) in collected data. The goal is to filter out
+    gaps caused by the subject blinking or random errors in pupil detection
     """
     data = []
     indexes = [WORLD_FRAME_IDX, GAZE_TIMESTAMP, X_NORM, Y_NORM]  # Select the indexes to be saved
@@ -37,32 +34,27 @@ def filter_gaps(csv_file_path, start_frame):
             if int(row[WORLD_FRAME_IDX]) >= start_frame:
                 data.append([row[i] for i in indexes])
 
-                if (float(row[GAZE_TIMESTAMP]) - previous_time) > GAZE_STAMP_THRESHOLD:
+                if (float(row[GAZE_TIMESTAMP]) - previous_time) > cfg.GAZE_STAMP_THRESHOLD:
                     # Gap detected, add timestamp to list
                     gaps.append(float(row[GAZE_TIMESTAMP]))
                 previous_time = float(row[GAZE_TIMESTAMP])
             else:
                 previous_time = float(row[GAZE_TIMESTAMP])
 
-    # Debug
-    # print("Gaps found " + str(len(gaps)))
-
     # Analyze gaps. Leave only significant gaps or gap clusters
     final_gaps = []
     cluster_start = 0
     cluster_end = 0
-    gap_threshold = 0.1
     gaps_in_cluster = 0
     written = False
 
     for gap in gaps:
-        # print(str(gap))
         if cluster_start == 0:
             cluster_start = gap
             cluster_end = gap
             gaps_in_cluster += 1
         else:
-            if (gap - cluster_end) < gap_threshold:
+            if (gap - cluster_end) < cfg.GAP_THRESHOLD:
                 cluster_end = gap
                 gaps_in_cluster += 1
                 written = False
@@ -76,30 +68,10 @@ def filter_gaps(csv_file_path, start_frame):
     if not written:
         final_gaps.append([gaps_in_cluster, cluster_start, cluster_end])
 
-    # Debug
-    # for gap in final_gaps:
-    #     print("Gaps: " + str(gap[0]) + " Time " + str(gap[1]) + " - " + str(gap[2]))
-
-    # Some variables for drawing a plot later
-    # plot_x_start = data[0][GAZE_TIMESTAMP]
-    # plot_x_end = data[-1][GAZE_TIMESTAMP]
-
     # Blink removal. Create new data structure by filtering out entries around found gaps
     filtered_data = []
     eliminated_data = []
     next_gap = 0
-
-    # for row in data:
-    #     if float(row[1]) > (gaps[next_gap] + BLINK_REMOVE_THRESHOLD):
-    #         # Passed current gap
-    #         if not next_gap == len(gaps) - 1:
-    #             next_gap += 1
-    #
-    #     if (float(row[1]) > (gaps[next_gap] - BLINK_REMOVE_THRESHOLD)) and (float(row[1]) < (gaps[next_gap] + BLINK_REMOVE_THRESHOLD)):
-    #         # Current items timestamp is inside elimination threshold
-    #         eliminated_data.append(row)
-    #     else:
-    #         filtered_data.append(row)
 
     for row in data:
         if float(row[1]) > final_gaps[next_gap][2]:
@@ -108,10 +80,10 @@ def filter_gaps(csv_file_path, start_frame):
                 next_gap += 1
 
         # Ignore gap if gap time is too short, or the cluster is too small
-        if final_gaps[next_gap][2] - final_gaps[next_gap][1] < BLINK_REMOVE_THRESHOLD or final_gaps[next_gap][
-            0] < CLUSTER_THRESHOLD:
-            if (float(row[1]) > (final_gaps[next_gap][1] - BLINK_REMOVE_THRESHOLD)) and (
-                        float(row[1]) < (final_gaps[next_gap][2] + BLINK_REMOVE_THRESHOLD)):
+        if final_gaps[next_gap][2] - final_gaps[next_gap][1] < cfg.BLINK_REMOVE_THRESHOLD \
+                or final_gaps[next_gap][0] < cfg.MISSING_MEASUREMENT_THRESHOLD:
+            if (float(row[1]) > (final_gaps[next_gap][1] - cfg.BLINK_REMOVE_THRESHOLD)) \
+                    and (float(row[1]) < (final_gaps[next_gap][2] + cfg.BLINK_REMOVE_THRESHOLD)):
                 # Current items timestamp is inside elimination threshold
                 eliminated_data.append(row)
             else:
@@ -119,9 +91,4 @@ def filter_gaps(csv_file_path, start_frame):
         else:
             filtered_data.append(row)
 
-    # Debug
-    # print("Filtered data size " + str(len(filtered_data)))
-    # print("Eliminated data size " + str(len(eliminated_data)))
-
-    # Return resulting filtered data
     return filtered_data

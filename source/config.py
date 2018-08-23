@@ -1,6 +1,7 @@
 # Config for eye tracking data processing
 
 from os.path import isdir
+from os.path import join
 
 # The path to original video files used in experiment
 TEST_VIDEO_FOLDER = r"D:\Raw_Files\eye_tracking_final_sequences_y4m"
@@ -50,6 +51,8 @@ CALIBRATION_POINT_NAMES = [
 # The time each calibration check takes in seconds
 CALIBRATION_CHECK_TIME = 10.0
 
+# CLUSTERING variables
+
 # During clustering of gaze points, if most data points fit inside this threshold window, clustering is not needed
 # These values are calculated based on the physical screen dimensions of the monitor used in the experiment,
 # the distance between the subject and the screen, and the natural error caused by eye tracker and human vision
@@ -65,6 +68,25 @@ CLUSTER_PERCENTAGE_THRESHOLD = 0.9
 # Try to find the optimal number of clusters between 2 and this maximum value
 # Bigger numbers increase processing time.
 MAX_CLUSTERS = 5
+
+# CLUSTERING - END
+
+# GAP FILTERING variables
+
+# If time between two gaze data points is longer than this, there's a missing measurement
+GAZE_STAMP_THRESHOLD = 0.0043
+# If there are more than N missing measurements within GAP_THRESHOLD (seconds), consider the area as invalid
+GAP_THRESHOLD = 0.1
+MISSING_MEASUREMENT_THRESHOLD = 5
+# This amount in seconds is removed before and after a detected gap
+BLINK_REMOVE_THRESHOLD = 0.2
+
+# GAP FILTERING - END
+
+# Path to file used to store the visibility intervals of calibration points in calibration checks for all subjects
+# If this file does not exist, the intervals will be calculated before the actual processing will start
+INTERVALS_FILE_NAME = "cp_intervals.json"
+CALIBRATION_POINT_INTERVALS_PATH = join(RESULTS_DIRECTORY, INTERVALS_FILE_NAME)
 
 
 # Check validity of config values. Return 'False' if invalid values found
