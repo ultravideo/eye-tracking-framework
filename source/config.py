@@ -1,7 +1,6 @@
 # Config for eye tracking data processing
 
 from os.path import isdir
-from os.path import join
 
 # The path to original video files used in experiment
 TEST_VIDEO_FOLDER = r"D:\Raw_Files\eye_tracking_final_sequences_y4m"
@@ -20,7 +19,9 @@ IGNORE_PERSON = ['0-f-35',
 CALIBRATION_CHECK_INTERVAL = 5
 
 # The directory which contains the results for each subject
-RESULTS_DIRECTORY = r"D:\actual_eyetrack_results"
+RESULTS_DIRECTORY = r"D:\test\eye_track_results"
+
+DEFAULT_OUTPUT_DIRECTORY = r"D:\test\exports"
 
 # The amount of calibration points in calibration checks
 CALIBRATION_POINTS_AMOUNT = 5
@@ -83,12 +84,6 @@ MISSING_MEASUREMENT_THRESHOLD = 5
 BLINK_REMOVE_THRESHOLD = 0.2
 
 # GAP FILTERING - END
-
-# Path to file used to store the visibility intervals of calibration points in calibration checks for all subjects
-# If this file does not exist, the intervals will be calculated before the actual processing will start
-INTERVALS_FILE_NAME = "cp_intervals.json"
-CALIBRATION_POINT_INTERVALS_PATH = join(RESULTS_DIRECTORY, INTERVALS_FILE_NAME)
-
 
 # Check validity of config values. Return 'False' if invalid values found
 def config_check():

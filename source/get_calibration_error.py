@@ -7,8 +7,10 @@ import numpy as np
 
 import config as cfg
 from compress_gaze_points import compress_gaze_points
-from filter_gaps import filter_gaps
 from detect_outliers import detect_outliers
+from filter_gaps import filter_gaps
+from get_calibration_point_intervals import get_calibration_point_intervals
+
 
 
 def get_calibration_error(location, recording="000", k=3, threshold=0.02):
@@ -27,7 +29,6 @@ def get_calibration_error(location, recording="000", k=3, threshold=0.02):
 
     csv_file_path = os.path.join(location, recording, "exports")
     subject_dir = os.path.normpath(os.path.join(location, "../"))
-    subject = os.path.basename(subject_dir)
 
     assert (len(os.listdir(csv_file_path)) == 1)  # Make sure there is exactly one export result
 
@@ -59,13 +60,9 @@ def get_calibration_error(location, recording="000", k=3, threshold=0.02):
     # Calculate the averages of points in the same frame
     gaze_points = compress_gaze_points(gaze_points_tmp)
 
-    # Load the calibration point intervals
-    with open(cfg.CALIBRATION_POINT_INTERVALS_PATH) as cp_data:
-        cp_intervals = json.load(cp_data)
-        cp_data.close()
-
     # Get the calibration point intervals for this video
-    points = cp_intervals[subject][recording]
+    calibrations_dir = os.path.join(subject_dir, "calibrations")
+    points = get_calibration_point_intervals(calibrations_dir, recording)
 
     gaze_error = {}
     fixation_error = {}
