@@ -5,6 +5,7 @@ from math import fabs
 import pprint
 import numpy as np
 
+import config as cfg
 from compress_gaze_points import compress_gaze_points
 from filter_gaps import filter_gaps
 from detect_outliers import detect_outliers
@@ -42,7 +43,8 @@ def get_calibration_error(location, recording="000", k=3, threshold=0.02):
 
     # Read fixations
     fixations = []
-    # 0 id, 1 start_timestamp, 2 duration, 3 start_frame, 4 end_frame, 5 norm_pos_x, 6 norm_pos_y, 7 x_scaled, 8 y_scaled, 9 on_srf
+    # 0 id, 1 start_timestamp, 2 duration, 3 start_frame, 4 end_frame, 5 norm_pos_x, 6 norm_pos_y,
+    # 7 x_scaled, 8 y_scaled, 9 on_srf
     # Indexes to be copied: start & end frames, x & y position
     indexes = [3, 4, 5, 6]
     with open(fixation_file_path) as fixation_csv:
@@ -58,43 +60,12 @@ def get_calibration_error(location, recording="000", k=3, threshold=0.02):
     gaze_points = compress_gaze_points(gaze_points_tmp)
 
     # Load the calibration point intervals
-    json_file_path = os.path.normpath(os.path.join(location, "../../cp_intervals_dict.json"))
-
-    with open(json_file_path) as cp_data:
+    with open(cfg.CALIBRATION_POINT_INTERVALS_PATH) as cp_data:
         cp_intervals = json.load(cp_data)
         cp_data.close()
 
     # Get the calibration point intervals for this video
     points = cp_intervals[subject][recording]
-
-    # Expected calibration point locations
-    # Note, in the eye capture software, y-axis is positive upwards
-    # In openCV, it's positive downwards
-    # Old values
-    """
-    cp_locations = [
-        [0.5, 0.5], # Center
-        [0.25, 0.25], # Down left
-        [0.25, 0.75], # Up left
-        [0.75, 0.75], # Up right
-        [0.75, 0.25] # Down right
-    ]
-    """
-
-    cp_locations = [
-        [0.5, 0.5],  # Center
-        [114 / 384, 1 / 3],  # Down left
-        [114 / 384, 2 / 3],  # Up left
-        [270 / 384, 2 / 3],  # Up right
-        [270 / 384, 1 / 3]  # Down right
-    ]
-
-    # Calibration point names
-    cp_names = ["center",
-                "bottom_left",
-                "top_left",
-                "top_right",
-                "bottom_right"]
 
     gaze_error = {}
     fixation_error = {}
@@ -102,9 +73,6 @@ def get_calibration_error(location, recording="000", k=3, threshold=0.02):
     error_sum_x = 0
     error_sum_y = 0
 
-    # Debug
-    # print("\nTotal fixations: " + str(len(fixations)))
-    # print(fixations)
     # Go through each point interval and calculate gaze error
     for point in points:
         # Gather the gaze points between interval start and end frames
@@ -133,13 +101,11 @@ def get_calibration_error(location, recording="000", k=3, threshold=0.02):
                     tmp[1] = point[1]
 
                 # Calculate error
-                tmp[2] = tmp[2] - cp_locations[current_point][0]
-                tmp[3] = tmp[3] - cp_locations[current_point][1]
+                tmp[2] = tmp[2] - cfg.CALIBRATION_POINT_LOCATIONS[current_point][0]
+                tmp[3] = tmp[3] - cfg.CALIBRATION_POINT_LOCATIONS[current_point][1]
                 current_fixations.append(tmp)
 
-        # Debug
-        # print("Fixations in interval (" + str(point[0]) + "-" + str(point[1]) + "): " + str(fixation_count))
-        fixation_error[cp_names[current_point]] = current_fixations
+        fixation_error[cfg.CALIBRATION_POINT_NAMES[current_point]] = current_fixations
 
         error_x = []
         error_y = []
@@ -149,27 +115,19 @@ def get_calibration_error(location, recording="000", k=3, threshold=0.02):
             # This way the error will be as follows:
             # On x axis the error will be positive if the measured point is to the right of the CP center
             # On y axis the error will be positive if the measured point is above the CP center
-            error_x_tmp = row[1] - cp_locations[current_point][0]
-            error_y_tmp = row[2] - cp_locations[current_point][1]
+            error_x_tmp = row[1] - cfg.CALIBRATION_POINT_LOCATIONS[current_point][0]
+            error_y_tmp = row[2] - cfg.CALIBRATION_POINT_LOCATIONS[current_point][1]
             error_sum_x += error_x_tmp
             error_sum_y += error_y_tmp
             error_x.append(error_x_tmp)
             error_y.append(error_y_tmp)
             error_comb.append(fabs(error_x_tmp) + fabs(error_y_tmp))
 
-            # print("Error x: " +str(error_x_tmp) + " y: " + str(error_y_tmp))
-
-        # Check points for outliers using k-NN
-        # outlier_indices = detect_outliers(error_comb)
+        # Check points for outliers
         points = np.column_stack((error_x, error_y))
         outlier_indices = detect_outliers(points)
         # Group error values together by calibration point index
-        gaze_error[cp_names[current_point]] = [error_x, error_y, error_comb, outlier_indices]
-
-        # Debug
-        # print("Outliers detected: " + str(len(outlier_indices)))
-        # if len(outlier_indices) > 0:
-        #     print(outlier_indices)
+        gaze_error[cfg.CALIBRATION_POINT_NAMES[current_point]] = [error_x, error_y, error_comb, outlier_indices]
 
         error_sum_x = 0
         error_sum_y = 0
@@ -179,8 +137,4 @@ def get_calibration_error(location, recording="000", k=3, threshold=0.02):
 
 
 if __name__ == "__main__":
-    pp = pprint.PrettyPrinter(indent=2)
-    gaze_error, fixation_error = get_calibration_error(
-        r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results\23-f-25\calibrations", "001")
-    pp.pprint(gaze_error)
-    pp.pprint(fixation_error)
+    pass

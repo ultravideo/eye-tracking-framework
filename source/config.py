@@ -33,6 +33,7 @@ CALIBRATION_POINTS_AMOUNT = 5
 # Note: the correction factor is calculated based on the four corner calibration points
 # in indexes 1 through 4 by default. If these are changed, correct the indexes
 # def get_transform_matrix_at_time() in get_correction_func.py
+# Note: in OpenCV, the y-axis is positive downwards, in Pupil Labs software, it's positive upwards
 CALIBRATION_POINT_LOCATIONS = [
     [0.5, 0.5],  # Center
     [114 / 384, 1 / 3],  # Down left
