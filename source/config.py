@@ -85,42 +85,74 @@ BLINK_REMOVE_THRESHOLD = 0.2
 
 # GAP FILTERING - END
 
+# CALIBRATION POINT INTERVAL calculation variables
+
+# Estimated radius (pixels?) of symbols in calibrations
+CALIBRATION_SYMBOL_RADIUS = 120
+
+# A subscreen is selected based on the estimated calibration symbol location and radius
+# By checking the subscreen brightness, appearing symbols can be detected (black symbol on a white background)
+# When sub screen brightness minimum is below this then the symbol is considered to be visible.
+SYMBOL_VISIBILITY_THRESHOLD = 30
+
+# After becoming visible, when the minimum is over this value the point is considered to be faded out
+SYMBOL_FADE_OUT_THRESHOLD = 50
+
+# CALIBRATION POINT INTERVAL - END
+
 # Check validity of config values. Return 'False' if invalid values found
 def config_check():
+    valid = True
     if not isdir(TEST_VIDEO_FOLDER):
         print("TEST_VIDEO_FOLDER:", TEST_VIDEO_FOLDER, "is not a directory or does not exist.")
-        return False
+        valid = False
 
     if not isdir(RESULTS_DIRECTORY):
         print("RESULTS_DIRECTORY:", RESULTS_DIRECTORY, "is not a directory or does not exist.")
-        return False
+        valid = False
 
     if len(CALIBRATION_POINT_LOCATIONS) != 5:
         print("Number of entries in CALIBRATION_POINT_LOCATIONS do not match CALIBRATION_POINTS_AMOUNT.")
-        return False
+        valid = False
 
     if len(CALIBRATION_POINT_NAMES) != 5:
         print("Number of entries in CALIBRATION_POINT_NAMES do not match CALIBRATION_POINTS_AMOUNT.")
-        return False
+        valid = False
 
     if CALIBRATION_CHECK_TIME < 0:
         print("CALIBRATION_CHECK_TIME must be positive")
-        return False
+        valid = False
 
     if CLUSTER_THRESHOLD_WIDTH < 0 or CLUSTER_THRESHOLD_WIDTH > 1.0:
         print("CLUSTER_THRESHOLD_WIDTH must be between 0 and 1")
-        return False
+        valid = False
 
     if CLUSTER_THRESHOLD_HEIGHT < 0 or CLUSTER_THRESHOLD_HEIGHT > 1.0:
         print("CLUSTER_THRESHOLD_HEIGHT must be between 0 and 1")
-        return False
+        valid = False
 
     if CLUSTER_PERCENTAGE_THRESHOLD < 0 or CLUSTER_PERCENTAGE_THRESHOLD > 1.0:
         print("CLUSTER_PERCENTAGE_THRESHOLD must be between 0 and 1")
-        return False
+        valid = False
 
     if MAX_CLUSTERS < 2:
         print("MAX_CLUSTERS must be at least 2")
-        return False
+        valid = False
 
-    return True
+    if GAZE_STAMP_THRESHOLD < 0:
+        print("GAZE_STAMP_THRESHOLD must be positive")
+        valid = False
+
+    if GAP_THRESHOLD < 0:
+        print("GAP_THRESHOLD must be positive")
+        valid = False
+
+    if MISSING_MEASUREMENT_THRESHOLD < 0:
+        print("MISSING_MEASUREMENT_THRESHOLD must be positive")
+        valid = False
+
+    if BLINK_REMOVE_THRESHOLD < 0:
+        print("BLINK_REMOVE_THRESHOLD must be positive")
+        valid = False
+
+    return valid
