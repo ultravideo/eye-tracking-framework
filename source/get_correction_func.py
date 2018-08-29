@@ -319,5 +319,4 @@ def get_correction_func_dispenser(subject):
 
 
 if __name__ == "__main__":
-    func = get_correction_func(r"C:\Local\siivonek\Data\eye_tracking_data\own_test_data\eyetrack_results\23-f-25",
-                               "FourPeople_1280x720_60.y4m")
+    pass
