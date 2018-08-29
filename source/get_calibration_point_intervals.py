@@ -3,23 +3,22 @@ import numpy as np
 import os
 from csv import reader
 
+import config as cfg
+
 
 def get_calibration_point_intervals(location, recording="000", starting_frame=10):
     """
     Returns calibration point intervals as a list for the given calibration
     video.
+    location is the path to video result root folder
+    recording is the subfolder containing the data
+    all frames before starting_frame are ignored
     """
 
     video_file_path = os.path.join(location, recording, "world.mp4")
     video = cv2.VideoCapture(video_file_path)
 
     csv_file_path = os.path.join(location, recording, "exports")
-    brightness_file = os.path.normpath(os.path.join(location, "../../cp_brightness_dict.json"))
-    subject_dir = os.path.normpath(os.path.join(location, "../"))
-    subject = os.path.basename(subject_dir)
-
-    # print("Brightness path: " + brightness_file)
-    # print("Processing " + subject + " : " + recording)
 
     if not os.path.isdir(csv_file_path):
         print("Exports missing for calibration. " + os.path.abspath(csv_file_path) + " not found.")
@@ -47,22 +46,11 @@ def get_calibration_point_intervals(location, recording="000", starting_frame=10
     # Expected calibration point locations
     # Note, in the eye capture software, y-axis is positive upwards
     # In openCV, it's positive downwards
-    cp_radius = 120
-    cp_centers = [
-        [0.5 * width, 0.5 * height],
-        [0.27 * width, 0.70 * height],
-        [0.27 * width, 0.30 * height],
-        [0.73 * width, 0.30 * height],
-        [0.73 * width, 0.70 * height],
-    ]
-
-    # When sub screen brightness minimum is below this
-    # then the point is considered to be visible.
-    cp_visibility_threshold = 30
-
-    # After becoming visible, when the minimum is over this value
-    # the point is considered to be faded out
-    cp_fade_out_threshold = 50
+    # The y-axis values from config need to be flipped since they are stored as y-axis positive upwards
+    cp_centers = []
+    for i in range(cfg.CALIBRATION_POINTS_AMOUNT):
+        cp_centers.append([cfg.CALIBRATION_POINT_LOCATIONS[i][0] * width,
+                           (1 - cfg.CALIBRATION_POINT_LOCATIONS[i][1]) * height])
 
     current_point = 0
     cp_start_frame = 0
@@ -97,29 +85,17 @@ def get_calibration_point_intervals(location, recording="000", starting_frame=10
 
         warp = cv2.warpPerspective(image, trans_mat2, dsize=(width, height))
 
-        minimum = np.min(
-            warp[int(cp_centers[current_point][1] - cp_radius):int(cp_centers[current_point][1] + cp_radius), \
-            int(cp_centers[current_point][0] - cp_radius):int(cp_centers[current_point][0] + cp_radius)])
-
-        # average = np.average(
-        #     warp[int(cp_centers[current_point][1] - cp_radius):int(cp_centers[current_point][1] + cp_radius), \
-        #     int(cp_centers[current_point][0] - cp_radius):int(cp_centers[current_point][0] + cp_radius)])
-
-        # Debug
-        # print("CP: " + str(current_point) + " Min: " + str(minimum))
-        # cv2.imshow("Full", warp[:, :])
-        # cv2.imshow("Test", warp[int(cp_centers[current_point][1]-cp_radius):int(cp_centers[current_point][1]+cp_radius), \
-        #                   int(cp_centers[current_point][0]-cp_radius):int(cp_centers[current_point][0]+cp_radius)])
+        y_lower_bound = int(cp_centers[current_point][1] - cfg.CALIBRATION_SYMBOL_RADIUS)
+        y_upper_bound = int(cp_centers[current_point][1] + cfg.CALIBRATION_SYMBOL_RADIUS)
+        x_lower_bound = int(cp_centers[current_point][0] - cfg.CALIBRATION_SYMBOL_RADIUS)
+        x_upper_bound = int(cp_centers[current_point][0] + cfg.CALIBRATION_SYMBOL_RADIUS)
+        minimum = np.min(warp[y_lower_bound:y_upper_bound, x_lower_bound:x_upper_bound])
 
         if frame > starting_frame:
-            if minimum < cp_visibility_threshold and not started:
-                # Debug
-                # print("Point fade in detected")
+            if minimum < cfg.SYMBOL_VISIBILITY_THRESHOLD and not started:
                 cp_start_frame = frame
                 started = True
-            if minimum > cp_fade_out_threshold and started:
-                # Debug
-                # print("Point fade out detected")
+            if minimum > cfg.SYMBOL_FADE_OUT_THRESHOLD and started:
                 interval_get = True
                 cp_end_frame = frame
                 if current_point == 4:
