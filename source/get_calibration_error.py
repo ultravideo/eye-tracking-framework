@@ -1,8 +1,6 @@
 import os.path
-import json
 from csv import reader
 from math import fabs
-import pprint
 import numpy as np
 
 import config as cfg
