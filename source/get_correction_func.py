@@ -244,39 +244,7 @@ def get_video_end_time(timeline, video):
     return time
 
 
-def get_transform_matrix_at_time(video, timeline, linefits):
-    # Use the estimated average position of the five calibration points to calculate
-    # perspective transform matrix
-
-    # Get time from middle of video
-    time = (get_video_start_time(timeline, video) + get_video_end_time(timeline, video)) / 2
-
-    tmp = []
-    # Use only the corner calibration points
-    for i in range(1, 5):
-        m = linefits[cfg.CALIBRATION_POINT_NAMES[i]]['x'][0]
-        b = linefits[cfg.CALIBRATION_POINT_NAMES[i]]['x'][1]
-        x_pos = m * time + b
-
-        m = linefits[cfg.CALIBRATION_POINT_NAMES[i]]['y'][0]
-        b = linefits[cfg.CALIBRATION_POINT_NAMES[i]]['y'][1]
-        y_pos = m * time + b
-
-        tmp.append([cfg.CALIBRATION_POINT_LOCATIONS[i][0] + x_pos, cfg.CALIBRATION_POINT_LOCATIONS[i][1] + y_pos])
-
-    # Note: in OpenCV, y is positive downwards
-    # In Pupil Labs software, y is positive upwards
-    # The y-axis is flipped when applying the transform in 'gaze_to_frame.py'
-    pts1 = np.float32(tmp)
-    pts2 = np.float32([cfg.CALIBRATION_POINT_LOCATIONS[1],
-                       cfg.CALIBRATION_POINT_LOCATIONS[2],
-                       cfg.CALIBRATION_POINT_LOCATIONS[3],
-                       cfg.CALIBRATION_POINT_LOCATIONS[4]])
-
-    return cv2.getPerspectiveTransform(pts1, pts2)
-
-
-def get_correction_func(subject, video, calibration="001"):
+def get_correction_func_dispenser(subject):
     """
     Get the gaze point correction function for given subject.
     
@@ -309,17 +277,45 @@ def get_correction_func(subject, video, calibration="001"):
 
         linefits[cfg.CALIBRATION_POINT_NAMES[i]] = tmp
 
-    if video == "calibrations":
-        mat = get_transform_matrix_at_time(calibration, timeline, linefits)
-    else:
-        mat = get_transform_matrix_at_time(video, timeline, linefits)
+    def get_transform_matrix_at_time(video):
+        # Use the estimated average position of the five calibration points to calculate
+        # perspective transform matrix
 
-    def correct_coordinates(x, y):
-        tmp = np.float32([[[x, y]]])
-        corr_tmp = cv2.perspectiveTransform(tmp, mat)
-        return corr_tmp[0, 0]
+        # Get time from middle of video
+        time = (get_video_start_time(timeline, video) + get_video_end_time(timeline, video)) / 2
 
-    return correct_coordinates
+        tmp = []
+        # Use only the corner calibration points
+        for i in range(1, 5):
+            m = linefits[cfg.CALIBRATION_POINT_NAMES[i]]['x'][0]
+            b = linefits[cfg.CALIBRATION_POINT_NAMES[i]]['x'][1]
+            x_pos = m * time + b
+
+            m = linefits[cfg.CALIBRATION_POINT_NAMES[i]]['y'][0]
+            b = linefits[cfg.CALIBRATION_POINT_NAMES[i]]['y'][1]
+            y_pos = m * time + b
+
+            tmp.append([cfg.CALIBRATION_POINT_LOCATIONS[i][0] + x_pos, cfg.CALIBRATION_POINT_LOCATIONS[i][1] + y_pos])
+
+        # Note: in OpenCV, y is positive downwards
+        # In Pupil Labs software, y is positive upwards
+        # The y-axis is flipped when applying the transform in 'gaze_to_frame.py'
+        pts1 = np.float32(tmp)
+        pts2 = np.float32([cfg.CALIBRATION_POINT_LOCATIONS[1],
+                           cfg.CALIBRATION_POINT_LOCATIONS[2],
+                           cfg.CALIBRATION_POINT_LOCATIONS[3],
+                           cfg.CALIBRATION_POINT_LOCATIONS[4]])
+
+        mat = cv2.getPerspectiveTransform(pts1, pts2)
+
+        def correct_coordinates(x, y):
+            tmp = np.float32([[[x, y]]])
+            corr_tmp = cv2.perspectiveTransform(tmp, mat)
+            return corr_tmp[0, 0]
+
+        return correct_coordinates
+
+    return get_transform_matrix_at_time
 
 
 if __name__ == "__main__":

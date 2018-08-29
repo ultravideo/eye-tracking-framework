@@ -5,7 +5,7 @@ from shutil import copy
 
 import config as cfg
 from gaze_to_frame import gaze_to_frame
-from get_correction_func import get_correction_func
+from get_correction_func import get_correction_func_dispenser
 
 
 def make_dir(directory):
@@ -32,7 +32,7 @@ def parse_person(subject):
     if len(sys.argv) >= 2:
         output_dir = sys.argv[1]
     else:
-        output_dir = "."
+        output_dir = cfg.DEFAULT_OUTPUT_DIRECTORY
 
     subject_path = os.path.join(cfg.RESULTS_DIRECTORY, subject)
     if not os.path.isdir(subject_path):
@@ -42,9 +42,11 @@ def parse_person(subject):
 
     videos = parse_log(os.path.join(subject_path, "log.txt"))
 
+    function_dispenser = get_correction_func_dispenser(subject_path)
+
     for video in videos:
         # Get the correction factor for this video
-        correction_func = get_correction_func(subject_path, video)
+        correction_func = function_dispenser(video)
 
         make_dir(os.path.join(output_dir, video))
         frame_rate = int(video.split("_")[2][0:2])
