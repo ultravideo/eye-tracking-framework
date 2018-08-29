@@ -1,5 +1,4 @@
 import os
-import numpy as np
 from math import floor
 
 from csv import reader
@@ -64,8 +63,6 @@ def gaze_to_frame(location, recording, framerate=60, correction_function=lambda 
         gaze_reader.__next__()  # skip the header row
         data = gaze_reader.__next__()
 
-        start_time = float(data[2])
-
         # Skip the black frames
         while int(data[1]) < start_frame:
             data = gaze_reader.__next__()
@@ -74,7 +71,6 @@ def gaze_to_frame(location, recording, framerate=60, correction_function=lambda 
         data_points = []
 
         for row in gaze_reader:
-            timestamp = float(row[2]) - start_time
             if initial_timestamp + frametime < float(row[2]):
                 if len(data_points) < threshold:
                     final_data.append(None)
@@ -83,7 +79,6 @@ def gaze_to_frame(location, recording, framerate=60, correction_function=lambda 
                     x, y = correction_function(temp[0], temp[1])
                     x = resolution[0] * x
                     y = resolution[1] - resolution[1] * y
-
 
                     if in_frame((x, y), resolution):
                         final_data.append((x, y,))
@@ -98,4 +93,4 @@ def gaze_to_frame(location, recording, framerate=60, correction_function=lambda 
 
 
 if __name__ == "__main__":
-    gaze_to_frame(r"C:\Local\sainio\Data\somedata\11-m-25\rushHour_1920x1080_50.y4m", "000", 50)
+    pass
